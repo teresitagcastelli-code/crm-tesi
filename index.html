@@ -139,9 +139,9 @@
       <button onclick="tryLogin()">Entrar</button>
     </div>
     <div id="cloudBox" class="hide">
-      <input id="cemail" type="email" placeholder="Tu email" autocomplete="username" style="text-align:left;letter-spacing:normal">
-      <input id="cpass" type="password" placeholder="Contraseña" autocomplete="current-password" style="text-align:left;letter-spacing:normal">
-      <button onclick="cloudLogin()">Entrar</button>
+      <input id="cemail" type="email" placeholder="Tu email" autocomplete="email" style="text-align:left;letter-spacing:normal">
+      <button onclick="cloudMagic()">Enviarme el enlace de acceso</button>
+      <div id="magicSent" class="gate-hint hide" style="color:var(--ok)">✉️ Te enviamos un enlace a tu mail. Abrilo en este dispositivo y tocá el botón para entrar. (Revisá spam)</div>
       <div class="gate-hint">🔒 Acceso privado — solo Tesi</div>
     </div>
     <div class="gate-hint" id="gateHint">Podés cambiar el PIN desde Ajustes ⚙</div>
@@ -400,6 +400,12 @@ async function cloudSignup(){const email=(document.getElementById('cemail').valu
   const{data:d,error}=await sb.auth.signUp({email,password:pass});
   if(error){toast(error.message);return;}
   if(d.session){cloudUser=d.user;await afterAuth();}else toast('Cuenta creada. Si pide confirmación, revisá tu email y volvé a entrar.');}
+async function cloudMagic(){const email=(document.getElementById('cemail').value||'').trim();
+  if(!email){toast('Poné tu email');return;}
+  if(!sb){toast('Cargando…');return;}
+  const{error}=await sb.auth.signInWithOtp({email,options:{shouldCreateUser:false,emailRedirectTo:location.origin}});
+  if(error){toast(error.message||'No pude enviar el enlace');return;}
+  document.getElementById('magicSent').classList.remove('hide');toast('Enlace enviado ✉️');}
 async function afterAuth(){document.getElementById('gate').classList.add('hide');document.getElementById('app').classList.remove('hide');
   await cloudLoad();buildSelects();render();}
 async function cloudLogout(){try{await sb.auth.signOut();}catch(e){}location.reload();}
@@ -413,7 +419,7 @@ function init(){
     if(sb)sb.auth.getSession().then(({data})=>{if(data&&data.session){cloudUser=data.session.user;afterAuth();}});
   }else{const p=document.getElementById('pin');if(p)p.focus();}}
 document.getElementById('pin').addEventListener('keydown',e=>{if(e.key==='Enter')tryLogin();});
-document.getElementById('cpass').addEventListener('keydown',e=>{if(e.key==='Enter')cloudLogin();});
+document.getElementById('cemail').addEventListener('keydown',e=>{if(e.key==='Enter')cloudMagic();});
 
 /* ============ SEED ============ */
 function seed(){return [
