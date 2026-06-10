@@ -353,6 +353,11 @@ function openDB(){return new Promise((res,rej)=>{const r=indexedDB.open('crm_fil
 async function putFile(k,v){const db=await openDB();return new Promise((res,rej)=>{const t=db.transaction('files','readwrite');t.objectStore('files').put(v,k);t.oncomplete=()=>res();t.onerror=()=>rej(t.error);});}
 async function getFile(k){const db=await openDB();return new Promise(res=>{const t=db.transaction('files','readonly');const q=t.objectStore('files').get(k);q.onsuccess=()=>res(q.result);q.onerror=()=>res(null);});}
 async function delFile(k){const db=await openDB();return new Promise(res=>{const t=db.transaction('files','readwrite');t.objectStore('files').delete(k);t.oncomplete=()=>res();t.onerror=()=>res();});}
+/* adjuntos: nube (Supabase Storage) o local (IndexedDB) */
+function attPath(k){return cloudUser.id+'/'+k;}
+async function attUpload(k,blob,ct){if(CLOUD&&cloudUser&&sb){const{error}=await sb.storage.from('adjuntos').upload(attPath(k),blob,{upsert:true,contentType:ct||blob.type||'application/octet-stream'});if(error)throw error;}else{await putFile(k,blob);}}
+async function attUrl(k,dl){if(CLOUD&&cloudUser&&sb){const{data}=await sb.storage.from('adjuntos').createSignedUrl(attPath(k),3600,dl?{download:dl}:undefined);return data?data.signedUrl:'';}const b=await getFile(k);return b?URL.createObjectURL(b):'';}
+async function attDel(k){if(CLOUD&&cloudUser&&sb){await sb.storage.from('adjuntos').remove([attPath(k)]);}else{await delFile(k);}}
 
 /* ============ STORAGE / CLOUD ============ */
 const SUPABASE_URL='https://frprumtgttmhhijfbvud.supabase.co';
@@ -593,7 +598,7 @@ function addNote(){const inp=document.getElementById('logNote');const t=inp.valu
 function saveContact(){if(persist(false)){document.getElementById('cOverlay').classList.remove('show');}}
 function deleteContact(){if(!editingId)return;
   if(confirm('¿Eliminar este contacto?')){const c=data.find(x=>x.id===editingId);
-    if(c&&c.att){(c.att.imgs||[]).forEach(i=>delFile(i.key));(c.att.budgets||[]).forEach(b=>delFile(b.key));}
+    if(c&&c.att){(c.att.imgs||[]).forEach(i=>attDel(i.key));(c.att.budgets||[]).forEach(b=>attDel(b.key));}
     data=data.filter(x=>x.id!==editingId);save();dirty=false;document.getElementById('cOverlay').classList.remove('show');render();toast('Eliminado');}}
 
 /* unsaved-changes flow */
@@ -606,10 +611,12 @@ function uCancel(){document.getElementById('uOverlay').classList.remove('show');
 /* ============ ATTACHMENTS ============ */
 function fileKey(){return 'f'+Date.now()+Math.random().toString(36).slice(2,6);}
 async function addBudget(ev){const files=[...ev.target.files];
-  for(const file of files){const key=fileKey();await putFile(key,file);draftAtt.budgets.push({key,name:file.name,type:file.type});}
+  try{for(const file of files){const key=fileKey();await attUpload(key,file,file.type);draftAtt.budgets.push({key,name:file.name,type:file.type});}}
+  catch(e){toast('Error al subir el archivo');console.error(e);}
   ev.target.value='';dirty=true;renderAtt();toast(files.length+' presupuesto(s) adjuntado(s)');}
 async function addImgs(ev){const files=[...ev.target.files];
-  for(const file of files){const blob=await shrink(file);const key=fileKey();await putFile(key,blob);draftAtt.imgs.push({key,name:file.name});}
+  try{for(const file of files){const blob=await shrink(file);const key=fileKey();await attUpload(key,blob,'image/jpeg');draftAtt.imgs.push({key,name:file.name});}}
+  catch(e){toast('Error al subir la imagen');console.error(e);}
   ev.target.value='';dirty=true;renderAtt();toast(files.length+' imagen(es) agregada(s)');}
 function shrink(file){return new Promise(res=>{const img=new Image();const u=URL.createObjectURL(file);
   img.onload=()=>{const max=1000;let{width:w,height:h}=img;if(w>max||h>max){const r=Math.min(max/w,max/h);w*=r;h*=r;}
@@ -618,16 +625,16 @@ function shrink(file){return new Promise(res=>{const img=new Image();const u=URL
   img.onerror=()=>{URL.revokeObjectURL(u);res(file);};img.src=u;});}
 async function renderAtt(){
   const bl=document.getElementById('budgetList');bl.innerHTML='';
-  for(const b of draftAtt.budgets){const blob=await getFile(b.key);const url=blob?URL.createObjectURL(blob):'#';
+  for(const b of draftAtt.budgets){const url=(await attUrl(b.key,b.name))||'#';
     const div=document.createElement('div');div.className='filechip';
-    div.innerHTML=`${b.generated?'<span class="gen-badge">CRM</span>':'📄'} <a href="${url}" download="${esc(b.name)}" target="_blank">${esc(b.name)}</a><span class="rm" onclick="rmBudget('${b.key}')">✕</span>`;
+    div.innerHTML=`${b.generated?'<span class="gen-badge">CRM</span>':'📄'} <a href="${url}" target="_blank">${esc(b.name)}</a><span class="rm" onclick="rmBudget('${b.key}')">✕</span>`;
     bl.appendChild(div);}
   const th=document.getElementById('thumbs');th.innerHTML='';
-  for(const im of draftAtt.imgs){const blob=await getFile(im.key);const url=blob?URL.createObjectURL(blob):'';
+  for(const im of draftAtt.imgs){const url=(await attUrl(im.key))||'';
     const d=document.createElement('div');d.className='thumb';
     d.innerHTML=(url?`<img src="${url}">`:esc(im.name))+`<span class="rm" onclick="rmImg('${im.key}')">✕</span>`;th.appendChild(d);}}
-function rmBudget(k){delFile(k);draftAtt.budgets=draftAtt.budgets.filter(b=>b.key!==k);dirty=true;renderAtt();}
-function rmImg(k){delFile(k);draftAtt.imgs=draftAtt.imgs.filter(i=>i.key!==k);dirty=true;renderAtt();}
+function rmBudget(k){attDel(k);draftAtt.budgets=draftAtt.budgets.filter(b=>b.key!==k);dirty=true;renderAtt();}
+function rmImg(k){attDel(k);draftAtt.imgs=draftAtt.imgs.filter(i=>i.key!==k);dirty=true;renderAtt();}
 
 /* ============ BUDGET BUILDER ============ */
 function openBudget(){const name=fv('name');if(!name){toast('Primero poné el nombre del contacto');return;}
@@ -661,7 +668,7 @@ async function generateBudget(){
   const meta={num,client:document.getElementById('b_client').value,date:document.getElementById('b_date').value,
     valid:document.getElementById('b_valid').value,cur,pay:document.getElementById('b_pay').value,
     ship:document.getElementById('b_ship').value,items,total:items.reduce((s,i)=>s+i.qty*i.price,0)};
-  const blob=buildPDF(meta);const key=fileKey();await putFile(key,blob);
+  const blob=buildPDF(meta);const key=fileKey();await attUpload(key,blob,'application/pdf');
   draftAtt.budgets.push({key,name:`Presupuesto ${num} - ${cleanName(fv('name'))}.pdf`,type:'application/pdf',generated:true});
   const c0=data.find(x=>x.id===editingId);if(c0)pushLog(c0,'Presupuesto '+num+' generado · '+fmtMoney(cur,meta.total));
   persist(true);await renderAtt();renderLog();closeBudget();
