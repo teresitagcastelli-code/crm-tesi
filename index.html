@@ -477,7 +477,7 @@ function setView(v){view=v;
   document.getElementById('table').classList.toggle('hide',v!=='table');
   document.getElementById('stats').classList.toggle('hide',v==='agenda');
   document.getElementById('addEvtBtn').style.display=(v==='agenda'&&!gConnected)?'inline-flex':'none';
-  render();}
+  render();if(v==='agenda'&&gConnected)gRefreshAgenda();}
 
 function filtered(){const q=(document.getElementById('search').value||'').toLowerCase();
   const seg=document.getElementById('fSeg').value,src=document.getElementById('fSrc').value;
@@ -782,19 +782,17 @@ function gcalUrl(c){if(!c.date)return'#';const s=c.date.replace(/-/g,'');const e
 /* ============ GOOGLE CALENDAR (sync bidireccional) ============ */
 function gReady(){return window.google&&google.accounts&&google.accounts.oauth2;}
 async function gWaitLib(ms){const t0=Date.now();while(!gReady()){if(Date.now()-t0>ms)return false;await new Promise(r=>setTimeout(r,200));}return true;}
-function gInit(){if(gTokenClient||!gReady())return;
-  gTokenClient=google.accounts.oauth2.initTokenClient({client_id:GCLIENT_ID,
-    scope:'https://www.googleapis.com/auth/calendar',
-    callback:(r)=>{if(r&&r.access_token){gToken=r.access_token;gExpiry=Date.now()+((r.expires_in||3300)*1000);gOnToken();}else if(gPendingConsent){gPendingConsent=false;toast('No se pudo conectar Google');}}});}
-async function gConnect(){const ok=await gWaitLib(8000);if(!ok){toast('Google no cargó; reintentá');return;}gInit();if(!gTokenClient){toast('Google no cargó');return;}gPendingConsent=true;toast('Abriendo Google…');gTokenClient.requestAccessToken({prompt:'consent'});}
-async function gSilent(){if(!gConnected)return;const ok=await gWaitLib(8000);if(!ok)return;gInit();if(gTokenClient)gTokenClient.requestAccessToken({prompt:''});}
-async function gOnToken(){try{localStorage.setItem('gcal_connected','1');gConnected=true;setSync('wait');
-  await gEnsureCal();await gPullPrimary();await gPushAll();setGcalUI();setSync('ok');render();
-  if(gPendingConsent){gPendingConsent=false;toast('Google Calendar conectado ✓');}
-}catch(e){console.error('gOnToken',e);setSync('err');}}
-async function gApi(path,opts){opts=opts||{};opts.headers=Object.assign({'Authorization':'Bearer '+gToken,'Content-Type':'application/json'},opts.headers||{});
+function gGetToken(interactive){return new Promise(async(resolve,reject)=>{
+  if(gToken&&Date.now()<gExpiry-60000){resolve(gToken);return;}
+  const ok=await gWaitLib(8000);if(!ok){reject(new Error('lib'));return;}
+  try{const tc=google.accounts.oauth2.initTokenClient({client_id:GCLIENT_ID,scope:'https://www.googleapis.com/auth/calendar',
+    callback:(r)=>{if(r&&r.access_token){gToken=r.access_token;gExpiry=Date.now()+((r.expires_in||3300)*1000);resolve(gToken);}else reject(new Error('no_token'));},
+    error_callback:(e)=>reject(e)});
+    tc.requestAccessToken({prompt:interactive?'consent':''});
+  }catch(e){reject(e);}});}
+async function gApi(path,opts,retry){opts=opts||{};opts.headers=Object.assign({'Authorization':'Bearer '+gToken,'Content-Type':'application/json'},opts.headers||{});
   const res=await fetch('https://www.googleapis.com/calendar/v3'+path,opts);
-  if(res.status===401){const er=new Error('401');er.code=401;throw er;}
+  if(res.status===401){if(!retry){try{await gGetToken(false);return await gApi(path,{method:opts.method,body:opts.body},true);}catch(e){}}const er=new Error('401');er.code=401;throw er;}
   if(!res.ok){throw new Error('gapi '+res.status);}
   return res.status===204?null:res.json();}
 async function gEnsureCal(){if(gcalId)return gcalId;
@@ -813,12 +811,24 @@ async function gPushTask(c){if(!gConnected||!gToken||!gcalId)return;
     }else if(c.gev){try{await gApi('/calendars/'+encodeURIComponent(gcalId)+'/events/'+c.gev,{method:'DELETE'});}catch(e){}delete c.gev;save();}
   }catch(e){if(e&&e.code===401)gSilent();else console.error('gPushTask',e);}}
 async function gPushAll(){for(const c of data){await gPushTask(c);}}
-async function gPullPrimary(){try{const tmin=addDays(today(),-7)+'T00:00:00Z',tmax=addDays(today(),60)+'T00:00:00Z';
-  const r=await gApi('/calendars/primary/events?singleEvents=true&orderBy=startTime&maxResults=250&timeMin='+tmin+'&timeMax='+tmax);
-  gEvents=(r.items||[]).filter(e=>e.status!=='cancelled').map(e=>({id:e.id,title:e.summary||'(sin título)',
-    date:(e.start&&(e.start.date||(e.start.dateTime||'').slice(0,10)))||'',
-    time:(e.start&&e.start.dateTime)?e.start.dateTime.slice(11,16):''})).filter(e=>e.date);
-}catch(e){if(e&&e.code===401)gSilent();else console.error('gPullPrimary',e);}}
+async function gPullAll(){try{
+  const cl=await gApi('/users/me/calendarList');
+  const tmin=addDays(today(),-2)+'T00:00:00Z',tmax=addDays(today(),90)+'T00:00:00Z';
+  const cals=(cl.items||[]).filter(c=>c.id!==gcalId&&!String(c.id).includes('holiday'));
+  let acc=[];
+  for(const cal of cals){try{const r=await gApi('/calendars/'+encodeURIComponent(cal.id)+'/events?singleEvents=true&orderBy=startTime&maxResults=250&timeMin='+tmin+'&timeMax='+tmax);
+    (r.items||[]).forEach(e=>{if(e.status==='cancelled')return;const d=(e.start&&(e.start.date||(e.start.dateTime||'').slice(0,10)))||'';if(!d)return;
+      acc.push({id:e.id,title:e.summary||'(sin título)',date:d,time:(e.start&&e.start.dateTime)?e.start.dateTime.slice(11,16):'',cal:cal.summary});});
+  }catch(err){}}
+  gEvents=acc.sort((a,b)=>a.date.localeCompare(b.date));
+}catch(e){console.error('gPullAll',e);}}
+async function gAfterConnect(initial){try{setSync('wait');localStorage.setItem('gcal_connected','1');gConnected=true;
+  await gEnsureCal();await gPullAll();await gPushAll();setGcalUI();setSync('ok');render();
+  if(initial)toast('Google Calendar conectado ✓');
+}catch(e){console.error('gAfterConnect',e);setSync('err');}}
+async function gConnect(){toast('Abriendo Google…');try{await gGetToken(true);await gAfterConnect(true);}catch(e){toast('No se pudo conectar Google');console.error(e);}}
+async function gSilent(){if(!gConnected)return;try{await gGetToken(false);await gAfterConnect(false);}catch(e){console.error('gSilent',e);}}
+async function gRefreshAgenda(){if(!gConnected)return;try{await gGetToken(false);await gPullAll();if(view==='agenda')render();}catch(e){}}
 function gDisconnect(){gConnected=false;gToken=null;gcalId=null;gEvents=[];
   localStorage.removeItem('gcal_connected');localStorage.removeItem('gcal_id');
   setGcalUI();render();toast('Google Calendar desconectado');}
