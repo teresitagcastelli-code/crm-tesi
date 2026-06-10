@@ -140,8 +140,10 @@
     </div>
     <div id="cloudBox" class="hide">
       <input id="cemail" type="email" placeholder="Tu email" autocomplete="email" style="text-align:left;letter-spacing:normal">
-      <button onclick="cloudMagic()">Enviarme el enlace de acceso</button>
-      <div id="magicSent" class="gate-hint hide" style="color:var(--ok)">✉️ Te enviamos un enlace a tu mail. Abrilo en este dispositivo y tocá el botón para entrar. (Revisá spam)</div>
+      <input id="cpin" type="password" inputmode="numeric" maxlength="8" placeholder="PIN" autocomplete="off">
+      <button onclick="cloudLoginPin()">Entrar</button>
+      <div class="gate-hint" style="cursor:pointer;text-decoration:underline" onclick="cloudMagic()">¿Olvidaste tu PIN? Entrar con un enlace al mail</div>
+      <div id="magicSent" class="gate-hint hide" style="color:var(--ok)">✉️ Te enviamos un enlace a tu mail. Abrilo en este dispositivo y tocá el botón. (Revisá spam)</div>
       <div class="gate-hint">🔒 Acceso privado — solo Tesi</div>
     </div>
     <div class="gate-hint" id="gateHint">Podés cambiar el PIN desde Ajustes ⚙</div>
@@ -293,7 +295,7 @@
     <div class="modal-head"><h2>Ajustes</h2><button class="x" onclick="closeSettings()">×</button></div>
     <div class="modal-body">
       <div class="full"><label>Tu nombre / estudio (sale en los presupuestos)</label><input id="s_artist" placeholder="Tesi"></div>
-      <div class="full"><label>Cambiar PIN de acceso</label><input id="s_pin" placeholder="Nuevo PIN (4-8 dígitos)"></div>
+      <div class="full"><label>Definir / cambiar PIN (para entrar con email + PIN)</label><input id="s_pin" inputmode="numeric" placeholder="PIN de 4 a 8 dígitos"></div>
       <div class="full" style="color:var(--muted);font-size:12.5px;line-height:1.6">
         <b style="color:var(--txt)">Backup en Google Drive:</b> usá <b>Exportar Excel</b> y guardá el archivo en tu Drive.<br><br>
         <b style="color:var(--txt)">Sincronización celu↔compu</b> y <b>Google Calendar bidireccional</b> se activan en producción (Vercel + nube). En esta demo los datos viven en este navegador.
@@ -356,6 +358,7 @@ async function delFile(k){const db=await openDB();return new Promise(res=>{const
 const SUPABASE_URL='https://frprumtgttmhhijfbvud.supabase.co';
 const SUPABASE_ANON='sb_publishable_zM1L-TevqnDSRBoTs3BLQQ_O9Wo5bZG';
 const CLOUD=/^https:\/\//.test(SUPABASE_URL);
+const PINSALT='tesi_';
 let sb=null,cloudUser=null,saveTimer=null;
 function migrateContact(c){if(!c.att)c.att={budgets:[],imgs:[]};
   if(c.att.budget!==undefined){if(c.att.budget)c.att.budgets=[c.att.budget];delete c.att.budget;}
@@ -400,26 +403,35 @@ async function cloudSignup(){const email=(document.getElementById('cemail').valu
   const{data:d,error}=await sb.auth.signUp({email,password:pass});
   if(error){toast(error.message);return;}
   if(d.session){cloudUser=d.user;await afterAuth();}else toast('Cuenta creada. Si pide confirmación, revisá tu email y volvé a entrar.');}
+async function cloudLoginPin(){const email=(document.getElementById('cemail').value||'').trim();const pin=(document.getElementById('cpin').value||'').trim();
+  if(!email||!pin){toast('Poné tu email y tu PIN');return;}
+  if(!sb){toast('Cargando…');return;}
+  const{data:d,error}=await sb.auth.signInWithPassword({email,password:PINSALT+pin});
+  if(error){toast('PIN incorrecto. Si no te acordás, tocá "Entrar con un enlace al mail".');return;}
+  cloudUser=d.user;await afterAuth();}
 async function cloudMagic(){const email=(document.getElementById('cemail').value||'').trim();
   if(!email){toast('Poné tu email');return;}
   if(!sb){toast('Cargando…');return;}
   const{error}=await sb.auth.signInWithOtp({email,options:{shouldCreateUser:false,emailRedirectTo:location.origin}});
   if(error){toast(error.message||'No pude enviar el enlace');return;}
   document.getElementById('magicSent').classList.remove('hide');toast('Enlace enviado ✉️');}
-async function afterAuth(){document.getElementById('gate').classList.add('hide');document.getElementById('app').classList.remove('hide');
+async function afterAuth(){try{if(cloudUser&&cloudUser.email)localStorage.setItem('crm_last_email',cloudUser.email);}catch(e){}
+  document.getElementById('gate').classList.add('hide');document.getElementById('app').classList.remove('hide');
   await cloudLoad();buildSelects();render();}
 async function cloudLogout(){try{await sb.auth.signOut();}catch(e){}location.reload();}
 function init(){
   if(CLOUD){try{sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON);}catch(e){console.error(e);}
     document.getElementById('pinBox').classList.add('hide');document.getElementById('cloudBox').classList.remove('hide');
-    document.getElementById('gateTitle').textContent='Tu CRM';document.getElementById('gateSub').textContent='Ingresá con tu email';
+    document.getElementById('gateTitle').textContent='Tu CRM';document.getElementById('gateSub').textContent='Ingresá con tu email y PIN';
     document.getElementById('gateHint').classList.add('hide');
+    const le=localStorage.getItem('crm_last_email');if(le)document.getElementById('cemail').value=le;
     const lr=document.getElementById('logoutRow');if(lr)lr.classList.remove('hide');
     const sw=document.getElementById('syncWrap');if(sw)sw.classList.remove('hide');
     if(sb)sb.auth.getSession().then(({data})=>{if(data&&data.session){cloudUser=data.session.user;afterAuth();}});
   }else{const p=document.getElementById('pin');if(p)p.focus();}}
 document.getElementById('pin').addEventListener('keydown',e=>{if(e.key==='Enter')tryLogin();});
-document.getElementById('cemail').addEventListener('keydown',e=>{if(e.key==='Enter')cloudMagic();});
+document.getElementById('cemail').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('cpin').focus();});
+document.getElementById('cpin').addEventListener('keydown',e=>{if(e.key==='Enter')cloudLoginPin();});
 
 /* ============ SEED ============ */
 function seed(){return [
@@ -740,9 +752,12 @@ function gcalUrl(c){if(!c.date)return'#';const s=c.date.replace(/-/g,'');const e
 /* ============ SETTINGS ============ */
 function openSettings(){document.getElementById('s_pin').value='';document.getElementById('s_artist').value=artist();document.getElementById('sOverlay').classList.add('show');}
 function closeSettings(){document.getElementById('sOverlay').classList.remove('show');}
-function saveSettings(){const p=document.getElementById('s_pin').value.trim();const ar=document.getElementById('s_artist').value.trim();
+async function saveSettings(){const p=document.getElementById('s_pin').value.trim();const ar=document.getElementById('s_artist').value.trim();
   if(ar)localStorage.setItem(ARTKEY,ar);
-  if(p){if(!/^\d{4,8}$/.test(p)){toast('El PIN debe tener 4-8 dígitos');return;}localStorage.setItem(PINKEY,p);}
+  if(p){if(!/^\d{4,8}$/.test(p)){toast('El PIN debe tener 4-8 dígitos');return;}localStorage.setItem(PINKEY,p);
+    if(CLOUD&&cloudUser&&sb){const{error}=await sb.auth.updateUser({password:PINSALT+p});
+      if(error){toast('No pude guardar el PIN: '+error.message);return;}
+      toast('PIN guardado ✓ Ahora entrás con email + PIN');closeSettings();return;}}
   toast('Ajustes guardados');closeSettings();}
 function wipe(){if(confirm('Esto borra TODOS los contactos de este dispositivo. ¿Seguro?')){
   localStorage.removeItem(KEY);localStorage.removeItem(EVKEY);data=seed();events=seedEvents();save();saveEvents();render();closeSettings();toast('Datos reiniciados');}}
