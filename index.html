@@ -527,7 +527,7 @@ const SHIP_DEFAULT='El costo de envío NO está incluido en este presupuesto: se
 let data=[],events=[],view='board',editingId=null,draftAtt={budgets:[],imgs:[]},dirty=false,pendingAction=null,editingEvent=null;
 let products=[]; // {id, name, desc, med, prices:[{date,cur,val}]}
 let workOrders=[];
-let hourlyRates={ARS:0,USD:0,EUR:0};
+let hourlyRates={ARS:22500,USD:0,EUR:0};
 let editingBudgetKey=null;
 let editingWOId=null;
 let draftWOAtt={fichaTecnica:[],imgs:[]};
@@ -568,16 +568,15 @@ function loadData(){try{data=JSON.parse(localStorage.getItem(KEY))||null;}catch(
   if(!data){data=seed();save();}
   data.forEach(migrateContact);
   try{events=JSON.parse(localStorage.getItem(EVKEY))||seedEvents();}catch(e){events=seedEvents();}
-  products=[];workOrders=[];hourlyRates={ARS:0,USD:0,EUR:0};
   saveEvents();}
 function save(){try{localStorage.setItem(KEY,JSON.stringify(data));}catch(e){}scheduleCloud();}
 function saveEvents(){try{localStorage.setItem(EVKEY,JSON.stringify(events));}catch(e){}scheduleCloud();}
 function getPin(){return localStorage.getItem(PINKEY)||'2108';}
 function artist(){return localStorage.getItem(ARTKEY)||BRAND.name;}
-function nextSeq(){let n=(+localStorage.getItem(SEQKEY)||0)+1;localStorage.setItem(SEQKEY,n);scheduleCloud();return n;}
+function nextSeq(){let n=Math.max(+localStorage.getItem(SEQKEY)||0,104)+1;localStorage.setItem(SEQKEY,n);scheduleCloud();return n;}
 function scheduleCloud(){if(!CLOUD||!cloudUser)return;setSync('wait');clearTimeout(saveTimer);saveTimer=setTimeout(cloudSave,800);}
 async function cloudSave(){if(!CLOUD||!cloudUser||!sb)return;
-  const state={contacts:data,events,artist:artist(),seq:+localStorage.getItem(SEQKEY)||0,products,workOrders,hourlyRates};
+  const state={contacts:data,events,artist:artist(),seq:+localStorage.getItem(SEQKEY)||0,importOn,seen:gSeen,importTo:localStorage.getItem('imp_to')||'',products,workOrders,hourlyRates};
   try{const{error}=await sb.from('crm_state').upsert({user_id:cloudUser.id,state,updated_at:new Date().toISOString()});
     if(error)throw error;setSync('ok');}catch(e){setSync('err');console.error('cloudSave',e);}}
 async function cloudLoad(){if(!sb||!cloudUser)return;
@@ -585,9 +584,13 @@ async function cloudLoad(){if(!sb||!cloudUser)return;
     if(error)throw error;
     if(row&&row.state){const s=row.state;data=Array.isArray(s.contacts)?s.contacts:[];events=Array.isArray(s.events)?s.events:[];
       if(s.artist)localStorage.setItem(ARTKEY,s.artist);if(s.seq!=null)localStorage.setItem(SEQKEY,s.seq);
+      gSeen={gmail:(s.seen&&Array.isArray(s.seen.gmail))?s.seen.gmail:[],yt:(s.seen&&Array.isArray(s.seen.yt))?s.seen.yt:[]};
+      if(s.importOn){importOn=true;localStorage.setItem('imp_on','1');}
+      if(s.importTo!=null)localStorage.setItem('imp_to',s.importTo);
       if(Array.isArray(s.products))products=s.products;
       if(Array.isArray(s.workOrders))workOrders=s.workOrders;
-      if(s.hourlyRates)hourlyRates=Object.assign({ARS:0,USD:0,EUR:0},s.hourlyRates);
+      if(!workOrders.length&&!localStorage.getItem('wo_demo_seeded')){workOrders=seedWorkOrders();localStorage.setItem('wo_demo_seeded','1');scheduleCloud();}
+      if(s.hourlyRates)hourlyRates=Object.assign({ARS:22500,USD:0,EUR:0},s.hourlyRates);
       data.forEach(migrateContact);setSync('ok');}
     else{data=seed();events=seedEvents();data.forEach(migrateContact);await cloudSave();}
   }catch(e){console.error('cloudLoad',e);toast('No pude leer la nube; reintentá');data=data&&data.length?data:[];events=events||[];}}
@@ -648,6 +651,51 @@ function seed(){return [
 ];}
 function mk(name,seg,src,ig,phone,email,action,notes){return {id:id(),name,seg,src,stage:'nuevo',country:'Argentina',val:0,cost:0,phone,email,ig,address:'',action,date:'',notes,partner:'',kids:'',bday:'',interests:'',att:{budgets:[],imgs:[]},log:[{ts:'2026-06-10T16:00:00.000Z',text:'Contacto creado (importado de \u201cCRM casero junio\u201d)'}]};}
 function seedEvents(){return [];}
+function seedWorkOrders(){
+  function wid(){return 'wo'+Math.random().toString(36).slice(2,9);}
+  function pid(){return 'p'+Math.random().toString(36).slice(2,9);}
+  function mid(){return 'm'+Math.random().toString(36).slice(2,9);}
+  return [
+    {id:wid(),title:'Capilla bordada con hoja de oro',contactName:'Antonia Ramírez',budgetNum:'P-0106',stage:'produccion',
+     salePrice:850,saleCur:'USD',plazo:21,confirmedDate:'2026-06-01',
+     laborBordado:{hours:18,rate:22500},laborHojaOro:{hours:6,rate:22500},gastosFijos:8000,
+     notes:'Capilla dorada 30x40 cm. Cliente confirmó colores en turquesa y dorado.',
+     productionTasks:[
+       {id:pid(),name:'Compra de insumos',startDate:'2026-06-02',endDate:'2026-06-03',done:true},
+       {id:pid(),name:'Bordar obra',startDate:'2026-06-04',endDate:'2026-06-15',done:true},
+       {id:pid(),name:'Dorar a la hoja',startDate:'2026-06-16',endDate:'2026-06-18',done:false},
+       {id:pid(),name:'Encargar cúpula',startDate:'2026-06-10',endDate:'2026-06-17',done:false},
+       {id:pid(),name:'Montar en cúpula',startDate:'2026-06-19',endDate:'2026-06-20',done:false},
+       {id:pid(),name:'Embalar',startDate:'2026-06-21',endDate:'2026-06-21',done:false},
+     ],
+     materials:[
+       {id:mid(),name:'Hoja de oro',medidas:'',qty:3,unit:'libretto',price:4500},
+       {id:mid(),name:'Insumos bordado',medidas:'',qty:1,unit:'kit',price:6000},
+       {id:mid(),name:'Cúpula de acrílico',medidas:'30x40cm',qty:1,unit:'u',price:0},
+     ],
+     att:{files:[]},log:[{ts:'2026-06-01T10:00:00.000Z',text:'Orden creada desde presupuesto P-0106'}]},
+    {id:wid(),title:'Cuadro hoja de oro — paisaje abstracto',contactName:'Marta Beltrán',budgetNum:'P-0108',stage:'cola',
+     salePrice:1200,saleCur:'USD',plazo:30,confirmedDate:'2026-06-10',
+     laborBordado:{hours:0,rate:22500},laborHojaOro:{hours:12,rate:22500},gastosFijos:5000,
+     notes:'50x70 cm sobre placa MDF. Espera confirmación de diseño final.',
+     productionTasks:WO_PTASK_DEFAULTS.map(n=>({id:pid(),name:n,startDate:'',endDate:'',done:false})),
+     materials:[
+       {id:mid(),name:'Hoja de oro',medidas:'',qty:6,unit:'libretto',price:4500},
+       {id:mid(),name:'Placa de MDF',medidas:'50x70cm',qty:1,unit:'u',price:3500},
+     ],
+     att:{files:[]},log:[{ts:'2026-06-10T14:00:00.000Z',text:'Orden creada desde presupuesto P-0108'}]},
+    {id:wid(),title:'Portarretrato bordado tejido',contactName:'Ana Coletti',budgetNum:'P-0102',stage:'terminada',
+     salePrice:320,saleCur:'USD',plazo:14,confirmedDate:'2026-05-15',
+     laborBordado:{hours:10,rate:22500},laborHojaOro:{hours:0,rate:22500},gastosFijos:2000,
+     notes:'20x25 cm tejido a punto de cruz. Lista para entrega.',
+     productionTasks:WO_PTASK_DEFAULTS.slice(0,3).map(n=>({id:pid(),name:n,startDate:'',endDate:'',done:true}))
+       .concat(WO_PTASK_DEFAULTS.slice(3).map(n=>({id:pid(),name:n,startDate:'',endDate:'',done:true}))),
+     materials:[
+       {id:mid(),name:'Insumos bordado',medidas:'',qty:1,unit:'kit',price:4000},
+     ],
+     att:{files:[]},log:[{ts:'2026-05-15T09:00:00.000Z',text:'Orden creada desde presupuesto P-0102'},{ts:'2026-05-28T17:00:00.000Z',text:'Obra terminada. Avisada la cliente.'}]},
+  ];
+}
 function id(){return 'c'+Math.random().toString(36).slice(2,9);}
 
 /* ============ SELECTS ============ */
