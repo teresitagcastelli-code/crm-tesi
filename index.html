@@ -335,6 +335,10 @@
         <button class="icon-btn hide" id="impNowBtn" style="width:100%;margin-top:8px" onclick="impNow()">Traer ahora</button>
         <div id="impStatus" style="color:var(--muted);font-size:12px;margin-top:8px"></div>
       </div>
+      <div class="full"><label>Casilla de negocio a importar (solo mails dirigidos a esta dirección)</label>
+        <input id="s_impto" placeholder="tesi@tesistudio.com">
+        <div style="color:var(--muted);font-size:11.5px;margin-top:4px">Dejala vacía para traer todos los mails entrantes. Podés poner una dirección (tesi@tesistudio.com) o un dominio (@tesistudio.com).</div>
+      </div>
       <div class="full" style="color:var(--muted);font-size:12.5px;line-height:1.6">
         <b style="color:var(--txt)">Backup en Google Drive:</b> usá <b>Exportar Excel</b> y guardá el archivo en tu Drive cuando quieras un respaldo extra.
       </div>
@@ -428,7 +432,7 @@ function artist(){return localStorage.getItem(ARTKEY)||BRAND.name;}
 function nextSeq(){let n=(+localStorage.getItem(SEQKEY)||0)+1;localStorage.setItem(SEQKEY,n);scheduleCloud();return n;}
 function scheduleCloud(){if(!CLOUD||!cloudUser)return;setSync('wait');clearTimeout(saveTimer);saveTimer=setTimeout(cloudSave,800);}
 async function cloudSave(){if(!CLOUD||!cloudUser||!sb)return;
-  const state={contacts:data,events,artist:artist(),seq:+localStorage.getItem(SEQKEY)||0,importOn,seen:gSeen};
+  const state={contacts:data,events,artist:artist(),seq:+localStorage.getItem(SEQKEY)||0,importOn,seen:gSeen,importTo:localStorage.getItem('imp_to')||''};
   try{const{error}=await sb.from('crm_state').upsert({user_id:cloudUser.id,state,updated_at:new Date().toISOString()});
     if(error)throw error;setSync('ok');}catch(e){setSync('err');console.error('cloudSave',e);}}
 async function cloudLoad(){if(!sb||!cloudUser)return;
@@ -438,6 +442,7 @@ async function cloudLoad(){if(!sb||!cloudUser)return;
       if(s.artist)localStorage.setItem(ARTKEY,s.artist);if(s.seq!=null)localStorage.setItem(SEQKEY,s.seq);
       gSeen={gmail:(s.seen&&Array.isArray(s.seen.gmail))?s.seen.gmail:[],yt:(s.seen&&Array.isArray(s.seen.yt))?s.seen.yt:[]};
       if(s.importOn){importOn=true;localStorage.setItem('imp_on','1');}
+      if(s.importTo!=null)localStorage.setItem('imp_to',s.importTo);
       data.forEach(migrateContact);setSync('ok');}
     else{data=seed();events=seedEvents();data.forEach(migrateContact);await cloudSave();}
   }catch(e){console.error('cloudLoad',e);toast('No pude leer la nube; reintentá');data=data&&data.length?data:[];events=events||[];}}
@@ -921,14 +926,17 @@ function impMake(o){return {id:id(),name:o.name||'(sin nombre)',seg:'',src:o.src
   phone:'',email:o.email||'',ig:o.ig||'',address:'',partner:'',kids:'',bday:'',interests:'',
   att:{budgets:[],imgs:[]},log:[{ts:nowStamp(),text:'Importado de '+(o.src||'canal')}]};}
 async function importGmail(){
-  const q='in:inbox -from:me newer_than:14d -category:promotions -category:social -category:forums';
+  const bizTo=(localStorage.getItem('imp_to')||'tesi@tesistudio.com').trim();const bizLc=bizTo.toLowerCase();
+  let q='in:inbox -from:me newer_than:14d -category:promotions -category:social -category:forums';
+  if(bizTo)q+=' (deliveredto:'+bizTo+' OR to:'+bizTo+')';
   const list=await gImpFetch('https://gmail.googleapis.com/gmail/v1/users/me/messages?maxResults=25&q='+encodeURIComponent(q));
   const msgs=list.messages||[];let added=0;
   const known=new Set(data.map(c=>(c.email||'').trim().toLowerCase()).filter(Boolean));
   for(const m of msgs){
     if(gSeen.gmail.includes(m.id))continue;gSeen.gmail.push(m.id);
-    let msg;try{msg=await gImpFetch('https://gmail.googleapis.com/gmail/v1/users/me/messages/'+m.id+'?format=metadata&metadataHeaders=From&metadataHeaders=Subject');}catch(e){continue;}
+    let msg;try{msg=await gImpFetch('https://gmail.googleapis.com/gmail/v1/users/me/messages/'+m.id+'?format=metadata&metadataHeaders=From&metadataHeaders=Subject&metadataHeaders=To&metadataHeaders=Cc&metadataHeaders=Delivered-To');}catch(e){continue;}
     const hs=(msg.payload&&msg.payload.headers)||[];
+    if(bizLc){const rcpt=(impHeader(hs,'To')+' '+impHeader(hs,'Cc')+' '+impHeader(hs,'Delivered-To')).toLowerCase();if(!rcpt.includes(bizLc))continue;}
     const pf=impParseFrom(impHeader(hs,'From'));if(!pf.email)continue;
     const el=pf.email.toLowerCase();
     if(/(no-?reply|noreply|do-?not-?reply|notifications?|notification|mailer-daemon|postmaster|bounce|newsletter|mailchimp|sendgrid|automated|googlemail.*noreply)/i.test(el))continue;
@@ -982,10 +990,13 @@ function setImpUI(){const b=document.getElementById('impBtn');const nb=document.
   if(s)s.textContent=gImporting?'Trayendo interacciones…':(importOn?'Conectado ✓ — al abrir la app entran solas las interacciones nuevas (mails de remitentes nuevos y comentarios de tus videos recientes) en la columna "Nueva interacción".':'No conectado. Conectá para que entren solas las interacciones de Gmail y YouTube.');}
 
 /* ============ SETTINGS ============ */
-function openSettings(){document.getElementById('s_pin').value='';document.getElementById('s_artist').value=artist();setGcalUI();setImpUI();document.getElementById('sOverlay').classList.add('show');}
+function openSettings(){document.getElementById('s_pin').value='';document.getElementById('s_artist').value=artist();
+  document.getElementById('s_impto').value=localStorage.getItem('imp_to')||'tesi@tesistudio.com';
+  setGcalUI();setImpUI();document.getElementById('sOverlay').classList.add('show');}
 function closeSettings(){document.getElementById('sOverlay').classList.remove('show');}
 async function saveSettings(){const p=document.getElementById('s_pin').value.trim();const ar=document.getElementById('s_artist').value.trim();
   if(ar)localStorage.setItem(ARTKEY,ar);
+  const it=document.getElementById('s_impto').value.trim();localStorage.setItem('imp_to',it);scheduleCloud();
   if(p){if(!/^\d{4,8}$/.test(p)){toast('El PIN debe tener 4-8 dígitos');return;}localStorage.setItem(PINKEY,p);
     if(CLOUD&&cloudUser&&sb){const{error}=await sb.auth.updateUser({password:PINSALT+p});
       if(error){toast('No pude guardar el PIN: '+error.message);return;}
