@@ -164,6 +164,7 @@
       <button id="tabTable" onclick="setView('table')">Lista</button>
     </div>
     <div class="grow"></div>
+    <button class="icon-btn" onclick="openQuick()" title="Cargar una interacción en 2 segundos">⚡ Interacción</button>
     <button class="icon-btn btn-primary" onclick="openContact()">＋ Contacto</button>
     <button class="icon-btn" onclick="document.getElementById('imp').click()">⭱ Importar</button>
     <button class="icon-btn" onclick="exportXlsx()">⭳ Excel</button>
@@ -196,6 +197,7 @@
       <div class="full"><label>Nombre *</label><input id="f_name" placeholder="Ej: Laura Méndez"></div>
       <div><label>Segmento</label><select id="f_seg"></select></div>
       <div><label>Origen</label><select id="f_src"></select></div>
+      <div><label>Tipo de interacción</label><select id="f_tipo"></select></div>
       <div><label>Etapa del funnel</label><select id="f_stage"></select></div>
       <div><label>País</label><input id="f_country" placeholder="Ej: Argentina"></div>
 
@@ -251,6 +253,26 @@
       <div class="right">
         <button class="icon-btn" onclick="attemptClose()">Cancelar</button>
         <button class="icon-btn btn-primary" onclick="saveContact()">Guardar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- QUICK INTERACTION MODAL -->
+<div class="overlay" id="qOverlay">
+  <div class="modal">
+    <div class="modal-head"><h2>⚡ Nueva interacción</h2><button class="x" onclick="closeQuick()">×</button></div>
+    <div class="modal-body">
+      <div class="full"><label>Nombre / handle *</label><input id="q_name" placeholder="Ej: @sofi.arte o Sofía López" onkeydown="if(event.key==='Enter'){event.preventDefault();saveQuick();}"></div>
+      <div><label>Canal</label><select id="q_src"></select></div>
+      <div><label>Tipo</label><select id="q_tipo"></select></div>
+      <div class="full"><label>Nota / qué dijo</label><textarea id="q_notes" placeholder="Ej: comentó '¡me encanta!' en el reel de la serie nueva"></textarea></div>
+    </div>
+    <div class="modal-foot">
+      <div class="grow"></div>
+      <div class="right">
+        <button class="icon-btn" onclick="closeQuick()">Cancelar</button>
+        <button class="icon-btn btn-primary" onclick="saveQuick()">Guardar interacción</button>
       </div>
     </div>
   </div>
@@ -338,6 +360,7 @@
 <script>
 /* ============ CONFIG ============ */
 const STAGES=[
+  {id:'interaccion',name:'Nueva interacción',color:'#8aa0b5'},
   {id:'nuevo',name:'Nuevo contacto',color:'#7c6df2'},{id:'contactado',name:'Contactado',color:'#4a9fd4'},
   {id:'interes',name:'Conversación / Interés',color:'#3cc1c9'},{id:'propuesta',name:'Propuesta enviada',color:'#c8a35a'},
   {id:'negociacion',name:'Negociación',color:'#d99a3c'},{id:'ganado',name:'Cerrado ganado',color:'#4fae7a'},
@@ -345,6 +368,7 @@ const STAGES=[
 const SEGMENTS=['Mecenas','Artistas','Interioristas/Arquitectura','Coleccionistas','Prensa','Galerías','Referentes'];
 const SEG_COLORS={'Mecenas':'#c8a35a','Artistas':'#7c6df2','Interioristas/Arquitectura':'#4a9fd4','Coleccionistas':'#3cc1c9','Prensa':'#d98cb0','Galerías':'#e0863c','Referentes':'#4fae7a'};
 const SOURCES=['WhatsApp','Instagram','Facebook','TikTok','LinkedIn','YouTube','Email','Sitio web','Reunión/Evento','Referido','Meta Ads','Otro'];
+const ITYPES=['','Comentario','DM / mensaje','Reacción a historia','Mención / etiqueta','Me gusta','Email','Otro'];
 const SRC_ICON={'WhatsApp':'🟢','Instagram':'📷','Facebook':'🔵','TikTok':'🎵','LinkedIn':'💼','YouTube':'▶️','Email':'✉️','Sitio web':'🌐','Reunión/Evento':'🤝','Referido':'⭐','Meta Ads':'📣','Otro':'•'};
 const ACTIONS=['','Cita para cotizar obra (presencial)','Cita para cotizar obra (virtual)','Contacto por WhatsApp','Enviar mail','Llamar','Reunión comercial','Reunión RRPP','Confeccionar propuesta','Enviar dossier/portfolio','Enviar presupuesto','Coordinar entrega de obra','Postventa/agradecer','Pedir referido','Follow up'];
 const KEY='crm_obra_v3',PINKEY='crm_pin_v1',EVKEY='crm_events_v2',ARTKEY='crm_artist',SEQKEY='crm_budget_seq';
@@ -468,9 +492,13 @@ function id(){return 'c'+Math.random().toString(36).slice(2,9);}
 function buildSelects(){const opt=(arr,sel)=>arr.map(v=>`<option ${v===sel?'selected':''}>${v}</option>`).join('');
   document.getElementById('fSeg').innerHTML='<option value="">Todos los segmentos</option>'+opt(SEGMENTS);
   document.getElementById('fSrc').innerHTML='<option value="">Todos los orígenes</option>'+opt(SOURCES);
-  document.getElementById('f_seg').innerHTML=opt(SEGMENTS);document.getElementById('f_src').innerHTML=opt(SOURCES);
+  document.getElementById('f_seg').innerHTML='<option value="">Sin clasificar</option>'+opt(SEGMENTS);
+  document.getElementById('f_src').innerHTML=opt(SOURCES);
+  document.getElementById('f_tipo').innerHTML=ITYPES.map(t=>`<option value="${t}">${t||'— sin tipo —'}</option>`).join('');
   document.getElementById('f_stage').innerHTML=STAGES.map(s=>`<option value="${s.id}">${s.name}</option>`).join('');
-  document.getElementById('f_action').innerHTML=ACTIONS.map(a=>`<option value="${a}">${a||'— sin acción —'}</option>`).join('');}
+  document.getElementById('f_action').innerHTML=ACTIONS.map(a=>`<option value="${a}">${a||'— sin acción —'}</option>`).join('');
+  document.getElementById('q_src').innerHTML=opt(SOURCES,'Instagram');
+  document.getElementById('q_tipo').innerHTML=ITYPES.map(t=>`<option value="${t}">${t||'— sin tipo —'}</option>`).join('');}
 
 /* ============ VIEW ============ */
 function setView(v){view=v;
@@ -518,8 +546,8 @@ function cardEl(c){const el=document.createElement('div');el.className='card';el
   const od=c.date&&c.date<today()&&!['ganado','perdido'].includes(c.stage);
   const nb=(c.att&&c.att.budgets&&c.att.budgets.length)?`<span class="gen-badge">📄 ${c.att.budgets.length}</span>`:'';
   el.innerHTML=`<div class="name"><span>${esc(c.name)}</span>${nb}</div>
-    <div class="meta"><span class="badge" style="background:${(SEG_COLORS[c.seg]||'#888')}22;color:${SEG_COLORS[c.seg]||'#aaa'}">${esc(c.seg)}</span>
-      <span class="src">${SRC_ICON[c.src]||''} ${esc(c.src)}</span></div>
+    <div class="meta"><span class="badge" style="background:${(SEG_COLORS[c.seg]||'#888')}22;color:${SEG_COLORS[c.seg]||'#aaa'}">${esc(c.seg||'Sin clasificar')}</span>
+      <span class="src">${SRC_ICON[c.src]||''} ${esc(c.src)}${c.tipo?' · '+esc(c.tipo):''}</span></div>
     ${c.action?`<div class="act">→ ${esc(c.action)}</div>`:''}
     <div class="row"><span class="val">${money(c.val)}</span>${c.date?`<span class="next ${od?'over':''}">📅 ${fmtDate(c.date)}</span>`:''}</div>`;
   el.addEventListener('dragstart',e=>{e.dataTransfer.setData('id',c.id);el.classList.add('drag');});
@@ -550,7 +578,7 @@ function renderAgenda(list){
         html+=`<div class="todo"><span class="tdot" style="background:${col}"></span>
           <div class="ti" onclick="openContact('${c.id}')" style="cursor:pointer">
             <b>${esc(c.action||'Acción')} · ${esc(c.name)}</b>
-            <div class="sub">${esc(c.seg)} · ${SRC_ICON[c.src]||''} ${esc(c.src)}${c.notes?' · '+esc(c.notes.slice(0,50)):''}</div></div>
+            <div class="sub">${esc(c.seg||'Sin clasificar')} · ${SRC_ICON[c.src]||''} ${esc(c.src)}${c.notes?' · '+esc(c.notes.slice(0,50)):''}</div></div>
           <span class="when ${over?'over':''}">${fmtFull(c.date)}${c.time?' · '+c.time+' hs':''}</span>
           <button class="mini ok" onclick="event.stopPropagation();markDone('${c.id}')">✓ Hecho</button>
           <button class="mini" onclick="event.stopPropagation();reprogram('${c.id}',this)">Reprogramar</button></div>`;
@@ -576,7 +604,7 @@ function renderTable(list){const t=document.getElementById('table');const sn=i=>
   t.innerHTML=`<table><thead><tr><th>Nombre</th><th>Segmento</th><th>Origen</th><th>País</th><th>Etapa</th><th>Acción</th><th>Valor</th><th>Fecha</th></tr></thead>
     <tbody>${list.map(c=>`<tr onclick="openContact('${c.id}')">
       <td><b>${esc(c.name)}</b></td>
-      <td><span class="badge" style="background:${(SEG_COLORS[c.seg]||'#888')}22;color:${SEG_COLORS[c.seg]||'#aaa'}">${esc(c.seg)}</span></td>
+      <td><span class="badge" style="background:${(SEG_COLORS[c.seg]||'#888')}22;color:${SEG_COLORS[c.seg]||'#aaa'}">${esc(c.seg||'Sin clasificar')}</span></td>
       <td>${SRC_ICON[c.src]||''} ${esc(c.src)}</td><td>${esc(c.country||'—')}</td>
       <td>${esc(sn(c.stage))}</td><td style="color:var(--accent)">${esc(c.action||'—')}</td>
       <td class="val">${money(c.val)}</td><td>${c.date?fmtFull(c.date):'—'}</td></tr>`).join('')}</tbody></table>`;
@@ -586,7 +614,7 @@ function renderTable(list){const t=document.getElementById('table');const sn=i=>
 async function openContact(cid){editingId=cid||null;const c=cid?data.find(x=>x.id===cid):{};
   document.getElementById('cTitle').textContent=cid?'Editar contacto':'Nuevo contacto';
   document.getElementById('delBtn').classList.toggle('hide',!cid);
-  f('name',c.name);f('seg',c.seg||SEGMENTS[3]);f('src',c.src||'WhatsApp');f('stage',c.stage||'nuevo');
+  f('name',c.name);f('seg',cid?(c.seg||''):SEGMENTS[3]);f('src',c.src||'WhatsApp');f('tipo',c.tipo||'');f('stage',c.stage||'nuevo');
   f('country',c.country);f('action',c.action||'');f('date',c.date);f('time',c.time||'');f('notes',c.notes);
   f('val',c.val||'');f('cost',c.cost||'');f('phone',c.phone);f('email',c.email);f('ig',c.ig);
   f('address',c.address);f('partner',c.partner);f('kids',c.kids);f('bday',c.bday);f('interests',c.interests);
@@ -600,12 +628,25 @@ document.getElementById('cBody').addEventListener('change',()=>dirty=true);
 function updateMaps(){const a=fv('address');const l=document.getElementById('mapsLink');
   if(a){l.href='https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(a);l.classList.remove('hide');}else l.classList.add('hide');}
 
-function collect(){return {name:fv('name'),seg:fv('seg'),src:fv('src'),stage:fv('stage'),country:fv('country'),
+function collect(){return {name:fv('name'),seg:fv('seg'),src:fv('src'),tipo:fv('tipo'),stage:fv('stage'),country:fv('country'),
   action:fv('action'),date:fv('date'),time:fv('time'),notes:fv('notes'),val:+fv('val')||0,cost:+fv('cost')||0,
   phone:fv('phone'),email:fv('email'),ig:fv('ig'),address:fv('address'),
   partner:fv('partner'),kids:fv('kids'),bday:fv('bday'),interests:fv('interests'),att:draftAtt};}
 function stageName(idv){return STAGES.find(s=>s.id===idv)?.name||idv;}
 function pushLog(c,text){if(!c.log)c.log=[];c.log.push({ts:nowStamp(),text});}
+/* ===== QUICK INTERACTION CAPTURE ===== */
+function openQuick(){document.getElementById('q_name').value='';document.getElementById('q_notes').value='';
+  document.getElementById('qOverlay').classList.add('show');setTimeout(()=>document.getElementById('q_name').focus(),50);}
+function closeQuick(){document.getElementById('qOverlay').classList.remove('show');}
+function saveQuick(){const name=document.getElementById('q_name').value.trim();
+  if(!name){toast('Poné un nombre o handle');return;}
+  const obj={id:id(),name,seg:'',src:document.getElementById('q_src').value,tipo:document.getElementById('q_tipo').value,
+    stage:'interaccion',country:'',action:'',date:'',time:'',notes:document.getElementById('q_notes').value.trim(),
+    val:0,cost:0,phone:'',email:'',ig:'',address:'',partner:'',kids:'',bday:'',interests:'',att:{budgets:[],imgs:[]},log:[]};
+  pushLog(obj,'Interacción registrada'+(obj.tipo?' ('+obj.tipo+')':'')+' · '+obj.src);
+  data.unshift(obj);
+  try{save();}catch(e){toast('Sin espacio para guardar');return;}
+  render();closeQuick();toast('Interacción cargada ⚡');}
 function persist(silent){const name=fv('name');if(!name){toast('Poné un nombre');return false;}
   const obj=collect();
   if(editingId){const t=data.find(x=>x.id===editingId);const old=t.stage;Object.assign(t,obj);
