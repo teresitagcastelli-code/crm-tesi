@@ -382,7 +382,7 @@ const ITYPES=['','Comentario','DM / mensaje','Reacción a historia','Mención / 
 const SRC_ICON={'WhatsApp':'🟢','Instagram':'📷','Facebook':'🔵','TikTok':'🎵','LinkedIn':'💼','YouTube':'▶️','Email':'✉️','Sitio web':'🌐','Reunión/Evento':'🤝','Referido':'⭐','Meta Ads':'📣','Otro':'•'};
 const ACTIONS=['','Cita para cotizar obra (presencial)','Cita para cotizar obra (virtual)','Contacto por WhatsApp','Enviar mail','Llamar','Reunión comercial','Reunión RRPP','Confeccionar propuesta','Enviar dossier/portfolio','Enviar presupuesto','Coordinar entrega de obra','Postventa/agradecer','Pedir referido','Follow up'];
 const KEY='crm_obra_v3',PINKEY='crm_pin_v1',EVKEY='crm_events_v2',ARTKEY='crm_artist',SEQKEY='crm_budget_seq';
-const BRAND={name:'Teresita Castelli — Tesi Studio',tagline:'Hecho a mano con hilo, oro y paciencia.',
+const BRAND={name:'Teresita Castelli — Tesi Studio',tagline:'Arte textil de autoría que enriquece superficies y vuelve protagonista al secreto, para quienes atesoran su curiosidad más íntima.',
   city:'Buenos Aires, Argentina · est. 2019',wa:'+54 9 11 5577-1131',waUrl:'https://wa.me/5491155771131',
   email:'tesi@tesistudio.com',ig:'@tesistudio',igUrl:'https://instagram.com/tesistudio',
   web:'tesistudio.com',webUrl:'https://www.tesistudio.com',cuit:'23386181144'};
@@ -429,7 +429,7 @@ function save(){try{localStorage.setItem(KEY,JSON.stringify(data));}catch(e){}sc
 function saveEvents(){try{localStorage.setItem(EVKEY,JSON.stringify(events));}catch(e){}scheduleCloud();}
 function getPin(){return localStorage.getItem(PINKEY)||'2108';}
 function artist(){return localStorage.getItem(ARTKEY)||BRAND.name;}
-function nextSeq(){let n=(+localStorage.getItem(SEQKEY)||0)+1;localStorage.setItem(SEQKEY,n);scheduleCloud();return n;}
+function nextSeq(){let n=Math.max(+localStorage.getItem(SEQKEY)||0,104)+1;localStorage.setItem(SEQKEY,n);scheduleCloud();return n;}
 function scheduleCloud(){if(!CLOUD||!cloudUser)return;setSync('wait');clearTimeout(saveTimer);saveTimer=setTimeout(cloudSave,800);}
 async function cloudSave(){if(!CLOUD||!cloudUser||!sb)return;
   const state={contacts:data,events,artist:artist(),seq:+localStorage.getItem(SEQKEY)||0,importOn,seen:gSeen,importTo:localStorage.getItem('imp_to')||''};
@@ -749,7 +749,7 @@ async function generateBudget(){
     .filter(i=>i.price>0||i.desc!=='Obra');
   if(!items.length){toast('Cargá al menos un ítem con precio');return;}
   const cur=document.getElementById('b_cur').value;
-  const seq=nextSeq();const num='P-'+String(seq).padStart(4,'0');
+  const seq=nextSeq();const num=String(seq).padStart(4,'0');
   const meta={num,client:document.getElementById('b_client').value,date:document.getElementById('b_date').value,
     valid:document.getElementById('b_valid').value,cur,pay:document.getElementById('b_pay').value,
     ship:document.getElementById('b_ship').value,items,total:items.reduce((s,i)=>s+i.qty*i.price,0)};
@@ -773,15 +773,16 @@ function buildPDF(m){const{jsPDF}=window.jspdf;const doc=new jsPDF({unit:'mm',fo
   doc.setFont(HEAD,'normal');doc.setTextColor(...ink);doc.setFontSize(18);
   doc.text('TESI GOMEZ CASTELLI',W/2,18,{align:'center',charSpace:1.6});
   doc.setDrawColor(...ink);doc.setLineWidth(0.4);doc.line(L,24,R,24);
-  // título (jerarquía baja) + socle protocolar mínimo
+  // izquierda: título + "de obra original · Para: cliente"
   doc.setFont(HEAD,'normal');doc.setTextColor(...ink);doc.setFontSize(19);doc.text('Presupuesto',L,38);
-  doc.setFont(BODY,'normal');doc.setTextColor(...gray);doc.setFontSize(9);doc.text('de obra original',L,43.5);
+  doc.setFont(BODY,'normal');doc.setTextColor(...gray);doc.setFontSize(9);
+  doc.text('de obra original   ·   Para: '+m.client,L,43.5);
+  // derecha: N° y fechas (alineado al margen derecho, compacto)
+  doc.setFont(BODY,'bold');doc.setTextColor(...ink);doc.setFontSize(10.5);doc.text('N° '+m.num,R,33,{align:'right'});
   doc.setFont(BODY,'normal');doc.setTextColor(...gray);doc.setFontSize(8.5);
-  let meta='N° '+m.num+'    ·    Emisión: '+fmtLong(m.date);
-  if(m.valid)meta+='    ·    Válido hasta: '+fmtLong(m.valid);
-  meta+='    ·    Para: '+m.client;
-  doc.text(meta,L,50);
-  y=56;doc.setDrawColor(...line);doc.setLineWidth(0.3);doc.line(L,y,R,y);y+=8;
+  doc.text('Emisión: '+fmtLong(m.date),R,38.5,{align:'right'});
+  if(m.valid)doc.text('Válido hasta: '+fmtLong(m.valid),R,43,{align:'right'});
+  y=50;doc.setDrawColor(...line);doc.setLineWidth(0.3);doc.line(L,y,R,y);y+=8;
   // tabla: columnas con aire; descripción y técnica multilínea
   const cDesc=L+2,wDesc=46,cMed=70,wMed=52,cCant=138,cUnit=162,cSub=R-1;
   doc.setFillColor(30,30,30);doc.rect(L,y-5.5,R-L,8,'F');
@@ -806,15 +807,17 @@ function buildPDF(m){const{jsPDF}=window.jspdf;const doc=new jsPDF({unit:'mm',fo
   y+=16;
   y=pdfSection(doc,'Condiciones de pago',m.pay,L,R,y,HEAD,BODY,ink,gray);
   y=pdfSection(doc,'Envío y embalaje',m.ship,L,R,y,HEAD,BODY,ink,gray);
-  // footer
-  const fy=H-26;doc.setDrawColor(...ink);doc.setLineWidth(0.4);doc.line(L,fy,R,fy);
-  doc.setFont(BODY,'normal');doc.setTextColor(...gray);doc.setFontSize(9);doc.text(BRAND.tagline,L,fy+6);
-  doc.setFont(BODY,'normal');doc.setTextColor(...ink);doc.setFontSize(8.5);
-  const linkY=fy+13;let lx=L;
-  const link=(label,url,last)=>{doc.textWithLink(label,lx,linkY,{url});lx+=doc.getTextWidth(label)+4;
-    if(!last){doc.setTextColor(...gray);doc.text('·',lx-2.5,linkY);doc.setTextColor(...ink);}};
-  link('WhatsApp '+BRAND.wa,BRAND.waUrl);link('Instagram '+BRAND.ig,BRAND.igUrl);
-  link(BRAND.email,'mailto:'+BRAND.email);link(BRAND.web,BRAND.webUrl,true);
+  // footer: contacto centrado SOBRE la línea + frase debajo
+  doc.setFont(BODY,'normal');doc.setFontSize(8.5);
+  const parts=[['WhatsApp '+BRAND.wa,BRAND.waUrl],['Instagram '+BRAND.ig,BRAND.igUrl],[BRAND.web,BRAND.webUrl]];
+  const sep='   ·   ';let total=0;
+  parts.forEach((p,i)=>{total+=doc.getTextWidth(p[0]);if(i<parts.length-1)total+=doc.getTextWidth(sep);});
+  let cx=(W-total)/2;const cyc=H-22;
+  parts.forEach((p,i)=>{doc.setTextColor(...ink);doc.textWithLink(p[0],cx,cyc,{url:p[1]});cx+=doc.getTextWidth(p[0]);
+    if(i<parts.length-1){doc.setTextColor(...gray);doc.text(sep,cx,cyc);cx+=doc.getTextWidth(sep);}});
+  const ly=H-18;doc.setDrawColor(...ink);doc.setLineWidth(0.4);doc.line(L,ly,R,ly);
+  doc.setFont(BODY,'normal');doc.setTextColor(...gray);doc.setFontSize(9);
+  let hy=ly+6;doc.splitTextToSize(BRAND.tagline,R-L).forEach(ln=>{doc.text(ln,W/2,hy,{align:'center'});hy+=4.6;});
   return doc.output('blob');}
 function pdfSection(doc,title,body,L,R,y,HEAD,BODY,ink,gray){
   doc.setFont(BODY,'bold');doc.setTextColor(...ink);doc.setFontSize(9.5);doc.text(title.toUpperCase(),L,y,{charSpace:1});y+=5.8;
