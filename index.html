@@ -380,7 +380,7 @@ const ACTIONS=['','Cita para cotizar obra (presencial)','Cita para cotizar obra 
 const KEY='crm_obra_v3',PINKEY='crm_pin_v1',EVKEY='crm_events_v2',ARTKEY='crm_artist',SEQKEY='crm_budget_seq';
 const BRAND={name:'Teresita Castelli — Tesi Studio',tagline:'Hecho a mano con hilo, oro y paciencia.',
   city:'Buenos Aires, Argentina · est. 2019',wa:'+54 9 11 5577-1131',waUrl:'https://wa.me/5491155771131',
-  email:'teresitagcastelli@gmail.com',ig:'@tesistudio',igUrl:'https://instagram.com/tesistudio',
+  email:'tesi@tesistudio.com',ig:'@tesistudio',igUrl:'https://instagram.com/tesistudio',
   web:'tesistudio.com',webUrl:'https://www.tesistudio.com',cuit:'23386181144'};
 const PAY_DEFAULT='El pago es del 100% del valor de la obra, por transferencia bancaria o en efectivo. La elaboración de las obras a pedido comienza una vez confirmado el pago. Si el importe está expresado en dólares y se abona en pesos argentinos, se toma el tipo de cambio dólar billete VENDEDOR del Banco de la Nación Argentina (BNA) del día de pago.';
 const SHIP_DEFAULT='El costo de envío NO está incluido en este presupuesto: se cotiza una vez confirmado el pedido y abonada la obra, según peso y provincia de destino. Envíos a todo el país por correo oficial y servicios de logística, con seguimiento incluido. El embalaje SÍ está incluido (film, papel de maíz, burbuja, cartón rígido y caja a medida). Cada obra se entrega firmada y con certificado de autenticidad. Por ser piezas elaboradas a pedido, no tienen devolución. Ante una obra dañada, escribir por WhatsApp dentro de las 48 hs con fotos y se gestiona la solución sin costo.';
@@ -764,46 +764,46 @@ function buildPDF(m){const{jsPDF}=window.jspdf;const doc=new jsPDF({unit:'mm',fo
   const W=210,H=297,L=18,R=W-18;const ink=[30,30,30],gray=[136,136,136],line=[208,202,191];let y=0;
   // marfil paper
   doc.setFillColor(245,240,231);doc.rect(0,0,W,H,'F');
-  // wordmark
+  // wordmark centrado (sin línea de ciudad)
   doc.setFont(HEAD,'normal');doc.setTextColor(...ink);doc.setFontSize(18);
-  doc.text('TESI GOMEZ CASTELLI',W/2,16,{align:'center',charSpace:1.6});
-  doc.setFont(BODY,'normal');doc.setTextColor(...gray);doc.setFontSize(8);
-  doc.text(BRAND.city.toUpperCase(),W/2,21,{align:'center',charSpace:1.2});
-  doc.setDrawColor(...ink);doc.setLineWidth(0.4);doc.line(L,26,R,26);
-  // title block
-  doc.setFont(HEAD,'normal');doc.setTextColor(...ink);doc.setFontSize(28);doc.text('Presupuesto',L,42);
-  doc.setFont(BODY,'normal');doc.setTextColor(...gray);doc.setFontSize(10.5);doc.text('de obra original',L,49);
-  doc.setFont(BODY,'bold');doc.setTextColor(...ink);doc.setFontSize(11);doc.text('N° '+m.num,R,38,{align:'right'});
-  doc.setFont(BODY,'normal');doc.setTextColor(...gray);doc.setFontSize(9.5);
-  doc.text('Emisión: '+fmtLong(m.date),R,44,{align:'right'});
-  if(m.valid)doc.text('Válido hasta: '+fmtLong(m.valid),R,49,{align:'right'});
-  y=60;doc.setDrawColor(...line);doc.setLineWidth(0.3);doc.line(L,y,R,y);y+=9;
-  // client
-  doc.setFont(BODY,'bold');doc.setTextColor(...gray);doc.setFontSize(8.5);doc.text('PARA',L,y,{charSpace:1.5});
-  doc.setFont(HEAD,'normal');doc.setTextColor(...ink);doc.setFontSize(14);doc.text(m.client,L,y+7);y+=18;
-  // items header
+  doc.text('TESI GOMEZ CASTELLI',W/2,18,{align:'center',charSpace:1.6});
+  doc.setDrawColor(...ink);doc.setLineWidth(0.4);doc.line(L,24,R,24);
+  // título (jerarquía baja) + socle protocolar mínimo
+  doc.setFont(HEAD,'normal');doc.setTextColor(...ink);doc.setFontSize(19);doc.text('Presupuesto',L,38);
+  doc.setFont(BODY,'normal');doc.setTextColor(...gray);doc.setFontSize(9);doc.text('de obra original',L,43.5);
+  doc.setFont(BODY,'normal');doc.setTextColor(...gray);doc.setFontSize(8.5);
+  let meta='N° '+m.num+'    ·    Emisión: '+fmtLong(m.date);
+  if(m.valid)meta+='    ·    Válido hasta: '+fmtLong(m.valid);
+  meta+='    ·    Para: '+m.client;
+  doc.text(meta,L,50);
+  y=56;doc.setDrawColor(...line);doc.setLineWidth(0.3);doc.line(L,y,R,y);y+=8;
+  // tabla: columnas con aire; descripción y técnica multilínea
+  const cDesc=L+2,wDesc=46,cMed=70,wMed=52,cCant=138,cUnit=162,cSub=R-1;
   doc.setFillColor(30,30,30);doc.rect(L,y-5.5,R-L,8,'F');
-  doc.setFont(BODY,'bold');doc.setTextColor(245,240,231);doc.setFontSize(8.5);
-  doc.text('DESCRIPCIÓN',L+2,y,{charSpace:.5});doc.text('TÉCNICA / MEDIDAS',92,y);doc.text('CANT',145,y,{align:'right'});
-  doc.text('P. UNIT',170,y,{align:'right'});doc.text('SUBTOTAL',R-2,y,{align:'right'});y+=9.5;
-  doc.setFont(BODY,'normal');doc.setFontSize(10.5);
-  m.items.forEach(it=>{const sub=it.qty*it.price;doc.setTextColor(...ink);
-    doc.text(String(it.desc).slice(0,42),L+2,y);doc.setTextColor(...gray);doc.setFontSize(9);
-    doc.text(String(it.med||'').slice(0,30),92,y);doc.setTextColor(...ink);doc.setFontSize(10.5);
-    doc.text(String(it.qty),145,y,{align:'right'});
-    doc.text(fmtMoney(m.cur,it.price),170,y,{align:'right'});
-    doc.text(fmtMoney(m.cur,sub),R-2,y,{align:'right'});
-    y+=7;doc.setDrawColor(...line);doc.line(L,y-2.5,R,y-2.5);});
+  doc.setFont(BODY,'bold');doc.setTextColor(245,240,231);doc.setFontSize(8);
+  doc.text('DESCRIPCIÓN',cDesc,y);doc.text('TÉCNICA / MEDIDAS',cMed,y);
+  doc.text('CANT',cCant,y,{align:'right'});doc.text('P. UNIT',cUnit,y,{align:'right'});doc.text('SUBTOTAL',cSub,y,{align:'right'});
+  y+=8;const lh=4.5;
+  m.items.forEach(it=>{const sub=it.qty*it.price;
+    doc.setFont(BODY,'normal');doc.setFontSize(9.5);const dl=doc.splitTextToSize(String(it.desc||''),wDesc);
+    doc.setFontSize(9);const ml=doc.splitTextToSize(String(it.med||''),wMed);
+    const rows=Math.max(dl.length,ml.length,1);
+    doc.setFontSize(9.5);doc.setTextColor(...ink);dl.forEach((ln,i)=>doc.text(ln,cDesc,y+i*lh));
+    doc.setFontSize(9);doc.setTextColor(...gray);ml.forEach((ln,i)=>doc.text(ln,cMed,y+i*lh));
+    doc.setFontSize(9);doc.setTextColor(...ink);
+    doc.text(String(it.qty)+' un.',cCant,y,{align:'right'});
+    doc.text(fmtMoney(m.cur,it.price),cUnit,y,{align:'right'});
+    doc.text(fmtMoney(m.cur,sub),cSub,y,{align:'right'});
+    y+=rows*lh+3;doc.setDrawColor(...line);doc.line(L,y-2,R,y-2);});
   // total
-  y+=6;doc.setFont(BODY,'bold');doc.setFontSize(11);doc.setTextColor(...gray);doc.text('TOTAL',120,y,{charSpace:1});
-  doc.setFont(HEAD,'normal');doc.setFontSize(17);doc.setTextColor(...ink);doc.text(fmtMoney(m.cur,m.total),R-2,y,{align:'right'});
+  y+=5;doc.setFont(BODY,'bold');doc.setFontSize(10.5);doc.setTextColor(...gray);doc.text('TOTAL',150,y,{align:'right'});
+  doc.setFont(HEAD,'normal');doc.setFontSize(16);doc.setTextColor(...ink);doc.text(fmtMoney(m.cur,m.total),cSub,y,{align:'right'});
   y+=16;
   y=pdfSection(doc,'Condiciones de pago',m.pay,L,R,y,HEAD,BODY,ink,gray);
   y=pdfSection(doc,'Envío y embalaje',m.ship,L,R,y,HEAD,BODY,ink,gray);
   // footer
   const fy=H-26;doc.setDrawColor(...ink);doc.setLineWidth(0.4);doc.line(L,fy,R,fy);
   doc.setFont(BODY,'normal');doc.setTextColor(...gray);doc.setFontSize(9);doc.text(BRAND.tagline,L,fy+6);
-  doc.setFontSize(8);doc.text('CUIT '+BRAND.cuit,R,fy+6,{align:'right'});
   doc.setFont(BODY,'normal');doc.setTextColor(...ink);doc.setFontSize(8.5);
   const linkY=fy+13;let lx=L;
   const link=(label,url,last)=>{doc.textWithLink(label,lx,linkY,{url});lx+=doc.getTextWidth(label)+4;
