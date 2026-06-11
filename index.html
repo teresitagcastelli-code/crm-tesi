@@ -119,7 +119,9 @@
   .btot .val{font-size:20px}
   @media(max-width:600px){.modal-body{grid-template-columns:1fr} header{padding:10px 12px} main{padding:12px}
     .tabs button{padding:7px 10px} .icon-btn{padding:8px 10px} .bitem{grid-template-columns:1fr 1fr;}
-    .bitem .del{justify-self:end}}
+    .bitem .del{justify-self:end}
+    .toolbar{gap:7px} .toolbar input[type=search]{flex:1 1 100%;min-width:0;font-size:16px} .toolbar select{flex:1 1 45%;min-width:0}
+    .todo{flex-wrap:wrap} .todo .when{order:3} .mini{padding:6px 10px}}
   #toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(40px);opacity:0;background:var(--gold);color:#1a1a2e;font-weight:700;padding:11px 20px;border-radius:30px;z-index:200;transition:.25s;box-shadow:var(--shadow);max-width:90vw;text-align:center}
   #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
   .hide{display:none !important}
@@ -200,6 +202,7 @@
       <div class="sect">Próxima acción</div>
       <div><label>Acción</label><select id="f_action"></select></div>
       <div><label>Fecha</label><input id="f_date" type="date"></div>
+      <div><label>Hora (opcional)</label><input id="f_time" type="time"></div>
       <div class="full"><label>Nota / detalle</label><textarea id="f_notes" placeholder="Ej: Enviar dossier de la serie nueva…"></textarea></div>
 
       <div class="sect">Métricas</div>
@@ -433,7 +436,7 @@ async function cloudMagic(){const email=(document.getElementById('cemail').value
   document.getElementById('magicSent').classList.remove('hide');toast('Enlace enviado ✉️');}
 async function afterAuth(){try{if(cloudUser&&cloudUser.email)localStorage.setItem('crm_last_email',cloudUser.email);}catch(e){}
   document.getElementById('gate').classList.add('hide');document.getElementById('app').classList.remove('hide');
-  await cloudLoad();buildSelects();render();setGcalUI();if(gConnected)gSilent();}
+  await cloudLoad();buildSelects();render();setGcalUI();gTryAuto();}
 async function cloudLogout(){try{await sb.auth.signOut();}catch(e){}location.reload();}
 function init(){
   if(CLOUD){try{sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON);}catch(e){console.error(e);}
@@ -538,6 +541,7 @@ function renderAgenda(list){
     <div class="stat"><div class="lbl">Vencidas</div><div class="num" style="color:var(--bad)">${tasks.filter(x=>x.date<tdy).length}</div></div>
     <div class="stat"><div class="lbl">Hoy (total)</div><div class="num gold">${all.filter(x=>x.date===tdy).length}</div></div>
     <div class="stat"><div class="lbl">${gConnected?'Google Calendar':'Eventos personales'}</div><div class="num acc">${gConnected?'✓':evs.length}</div></div></div>`;
+  if(!gConnected)html+=`<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:16px;font-size:13px;color:var(--muted)">📅 Conectá tu Google Calendar para ver tus turnos personales y sincronizar tus tareas. <button class="icon-btn btn-primary" onclick="gConnect()">Conectar Google Calendar</button></div>`;
   let any=false;
   groups.forEach(g=>{const items=all.filter(g.f);if(!items.length)return;any=true;
     html+=`<div class="agenda-group ${g.urgent?'urgent':''}"><h3>${g.t}<span class="pill">${items.length}</span></h3>`;
@@ -547,7 +551,7 @@ function renderAgenda(list){
           <div class="ti" onclick="openContact('${c.id}')" style="cursor:pointer">
             <b>${esc(c.action||'Acción')} · ${esc(c.name)}</b>
             <div class="sub">${esc(c.seg)} · ${SRC_ICON[c.src]||''} ${esc(c.src)}${c.notes?' · '+esc(c.notes.slice(0,50)):''}</div></div>
-          <span class="when ${over?'over':''}">${fmtFull(c.date)}</span>
+          <span class="when ${over?'over':''}">${fmtFull(c.date)}${c.time?' · '+c.time+' hs':''}</span>
           <button class="mini ok" onclick="event.stopPropagation();markDone('${c.id}')">✓ Hecho</button>
           <button class="mini" onclick="event.stopPropagation();reprogram('${c.id}',this)">Reprogramar</button></div>`;
       }else{const e=x.e;const clk=!gConnected;
@@ -583,7 +587,7 @@ async function openContact(cid){editingId=cid||null;const c=cid?data.find(x=>x.i
   document.getElementById('cTitle').textContent=cid?'Editar contacto':'Nuevo contacto';
   document.getElementById('delBtn').classList.toggle('hide',!cid);
   f('name',c.name);f('seg',c.seg||SEGMENTS[3]);f('src',c.src||'WhatsApp');f('stage',c.stage||'nuevo');
-  f('country',c.country);f('action',c.action||'');f('date',c.date);f('notes',c.notes);
+  f('country',c.country);f('action',c.action||'');f('date',c.date);f('time',c.time||'');f('notes',c.notes);
   f('val',c.val||'');f('cost',c.cost||'');f('phone',c.phone);f('email',c.email);f('ig',c.ig);
   f('address',c.address);f('partner',c.partner);f('kids',c.kids);f('bday',c.bday);f('interests',c.interests);
   updateMaps();draftAtt=c.att?JSON.parse(JSON.stringify(c.att)):{budgets:[],imgs:[]};
@@ -597,7 +601,7 @@ function updateMaps(){const a=fv('address');const l=document.getElementById('map
   if(a){l.href='https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(a);l.classList.remove('hide');}else l.classList.add('hide');}
 
 function collect(){return {name:fv('name'),seg:fv('seg'),src:fv('src'),stage:fv('stage'),country:fv('country'),
-  action:fv('action'),date:fv('date'),notes:fv('notes'),val:+fv('val')||0,cost:+fv('cost')||0,
+  action:fv('action'),date:fv('date'),time:fv('time'),notes:fv('notes'),val:+fv('val')||0,cost:+fv('cost')||0,
   phone:fv('phone'),email:fv('email'),ig:fv('ig'),address:fv('address'),
   partner:fv('partner'),kids:fv('kids'),bday:fv('bday'),interests:fv('interests'),att:draftAtt};}
 function stageName(idv){return STAGES.find(s=>s.id===idv)?.name||idv;}
@@ -801,7 +805,12 @@ async function gEnsureCal(){if(gcalId)return gcalId;
   if(!cal){cal=await gApi('/calendars',{method:'POST',body:JSON.stringify({summary:'CRM Tesi',timeZone:'America/Argentina/Buenos_Aires'})});}
   gcalId=cal.id;localStorage.setItem('gcal_id',gcalId);return gcalId;}
 function gTaskEvent(c){let det=c.notes||'';if(c.phone)det+='\nTel: '+c.phone;if(c.email)det+='\nEmail: '+c.email;
-  return {summary:(c.action||'Acción')+' · '+c.name,start:{date:c.date},end:{date:addDays(c.date,1)},description:det,extendedProperties:{private:{crmContact:c.id}}};}
+  const ev={summary:(c.action||'Acción')+' · '+c.name,description:det,extendedProperties:{private:{crmContact:c.id}}};
+  if(c.time){const[h,m]=c.time.split(':');const eh=(+h+1);const ed=eh>=24?addDays(c.date,1):c.date;const ehh=String(eh%24).padStart(2,'0');
+    ev.start={dateTime:c.date+'T'+c.time+':00-03:00',timeZone:'America/Argentina/Buenos_Aires'};
+    ev.end={dateTime:ed+'T'+ehh+':'+m+':00-03:00',timeZone:'America/Argentina/Buenos_Aires'};}
+  else{ev.start={date:c.date};ev.end={date:addDays(c.date,1)};}
+  return ev;}
 async function gPushTask(c){if(!gConnected||!gToken||!gcalId)return;
   const open=c.date&&c.action&&!['ganado','perdido'].includes(c.stage);
   try{
@@ -828,6 +837,7 @@ async function gAfterConnect(initial){try{setSync('wait');localStorage.setItem('
 }catch(e){console.error('gAfterConnect',e);setSync('err');}}
 async function gConnect(){toast('Abriendo Google…');try{await gGetToken(true);await gAfterConnect(true);}catch(e){toast('No se pudo conectar Google');console.error(e);}}
 async function gSilent(){if(!gConnected)return;try{await gGetToken(false);await gAfterConnect(false);}catch(e){console.error('gSilent',e);}}
+async function gTryAuto(){try{await gGetToken(false);await gAfterConnect(false);}catch(e){gConnected=false;localStorage.removeItem('gcal_connected');setGcalUI();if(view==='agenda')render();}}
 async function gRefreshAgenda(){if(!gConnected)return;try{await gGetToken(false);await gPullAll();if(view==='agenda')render();}catch(e){}}
 function gDisconnect(){gConnected=false;gToken=null;gcalId=null;gEvents=[];
   localStorage.removeItem('gcal_connected');localStorage.removeItem('gcal_id');
