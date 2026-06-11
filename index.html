@@ -107,10 +107,6 @@
   .gen-badge{font-size:10px;background:var(--gold-soft);color:var(--gold);border-radius:20px;padding:1px 7px;font-weight:700}
   .mini{font-size:11px;font-weight:700;padding:5px 9px;border-radius:8px;background:var(--panel);color:var(--txt);border:1px solid var(--line);white-space:nowrap}
   .mini:hover{border-color:var(--gold)} .mini.ok{background:var(--ok);color:#0c1f15;border:none}
-  .task-row{display:grid;grid-template-columns:1fr auto auto auto;gap:7px;align-items:center;background:var(--panel);border:1px solid var(--line);border-radius:9px;padding:8px 10px;margin-bottom:6px}
-  .task-row select,.task-row input[type=date],.task-row input[type=time]{background:var(--bg);border:1px solid var(--line);color:var(--txt);border-radius:6px;padding:5px 7px;font-size:12px}
-  .task-del{background:none;border:none;color:var(--muted);cursor:pointer;font-size:18px;line-height:1;padding:0 4px}
-  .task-del:hover{color:var(--bad)}
   .loglist{margin-top:12px;border-left:2px solid var(--line);padding-left:2px;max-height:230px;overflow:auto}
   .logitem{display:flex;gap:10px;align-items:flex-start;padding:7px 0 7px 12px;position:relative}
   .logdot{position:absolute;left:-5px;top:11px;width:8px;height:8px;border-radius:50%;background:var(--gold);border:2px solid var(--panel)}
@@ -134,6 +130,48 @@
   .dlg h3{margin:0 0 8px;font-size:16px} .dlg p{color:var(--muted);font-size:13px;margin:0 0 18px}
   .dlg .btns{display:flex;flex-direction:column;gap:9px}
   .dlg .btns button{padding:11px;border-radius:10px;font-weight:700;font-size:14px}
+  /* work orders kanban */
+  .wo-board{display:flex;gap:14px;overflow-x:auto;align-items:flex-start;padding-bottom:20px}
+  .wo-col{flex:0 0 270px;background:var(--panel);border-radius:13px;border:1px solid var(--line);padding:12px;min-height:200px}
+  .wo-col.drop{border-color:var(--gold)}
+  .wo-col h3{font-size:12.5px;font-weight:700;margin:0 0 10px;display:flex;align-items:center;gap:7px}
+  .wo-card{background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:11px 12px;margin-bottom:8px;cursor:pointer;transition:border-color .15s;user-select:none}
+  .wo-card:hover{border-color:var(--gold)}
+  .wo-card .wo-name{font-weight:700;font-size:13px;margin-bottom:3px}
+  .wo-card .wo-sub{font-size:11.5px;color:var(--muted);margin-bottom:7px}
+  .wo-card .wo-progress{height:4px;background:var(--line);border-radius:3px;margin-bottom:4px;overflow:hidden}
+  .wo-card .wo-progress-bar{height:100%;background:var(--gold);border-radius:3px}
+  .wo-card .wo-cnt{font-size:11px;color:var(--muted);margin-bottom:5px}
+  .wo-card .wo-row{display:flex;justify-content:space-between;align-items:center;font-size:12px;margin-top:6px}
+  .countdown{display:inline-block;font-size:11px;font-weight:700;padding:2px 7px;border-radius:6px;background:#1e3a2f;color:var(--ok);margin-bottom:4px}
+  .countdown.warn{background:#3a2e0f;color:var(--warn)}
+  .countdown.over{background:#3a0f0f;color:var(--bad)}
+  /* materials table */
+  .mat-table{width:100%;border-collapse:collapse;font-size:12.5px}
+  .mat-table th{text-align:left;color:var(--muted);font-weight:600;padding:5px 6px;border-bottom:1px solid var(--line);font-size:11.5px}
+  .mat-table td{padding:4px 6px;border-bottom:1px solid var(--line)}
+  .mat-table td input{width:100%;background:transparent;border:none;color:var(--txt);font-size:12.5px;padding:2px 0;min-width:0}
+  .mat-table td input:focus{outline:1px solid var(--gold);border-radius:3px}
+  .mat-del{background:none;border:none;color:var(--muted);cursor:pointer;font-size:14px;padding:0 2px}
+  .mat-del:hover{color:var(--bad)}
+  /* production tasks */
+  .ptask{display:grid;grid-template-columns:20px 1fr auto auto auto;gap:7px;align-items:center;padding:7px 0;border-bottom:1px solid var(--line)}
+  .ptask:last-child{border-bottom:none}
+  .ptask input[type=date]{background:var(--bg);border:1px solid var(--line);color:var(--txt);border-radius:6px;padding:3px 6px;font-size:11.5px}
+  .ptask-del{background:none;border:none;color:var(--muted);cursor:pointer;font-size:14px;padding:0 2px}
+  .ptask-del:hover{color:var(--bad)}
+  /* financial summary */
+  .fin-summary{background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+  .fin-row{display:flex;justify-content:space-between;align-items:center;font-size:13px;padding:3px 0}
+  .fin-row.total{font-weight:800;font-size:14px;border-top:1px solid var(--line);padding-top:8px;margin-top:4px}
+  /* product catalog */
+  .prod-item{display:flex;align-items:center;gap:10px;background:var(--panel);border:1px solid var(--line);border-radius:9px;padding:9px 12px;margin-bottom:6px}
+  .prod-item .pi-info{flex:1;min-width:0}
+  .prod-item .pi-name{font-weight:700;font-size:13px}
+  .prod-item .pi-sub{font-size:11.5px;color:var(--muted);margin-top:2px}
+  /* filebox */
+  .filebox{background:var(--panel);border:1px dashed var(--line);border-radius:9px;padding:12px;text-align:center;cursor:pointer;font-size:13px;color:var(--muted);margin-bottom:8px}
+  .filebox:hover{border-color:var(--gold)}
 </style>
 </head>
 <body>
@@ -166,6 +204,7 @@
       <button id="tabBoard" class="on" onclick="setView('board')">Funnel</button>
       <button id="tabAgenda" onclick="setView('agenda')">Agenda</button>
       <button id="tabTable" onclick="setView('table')">Lista</button>
+      <button id="tabWorkorders" onclick="setView('workorders')">Órdenes</button>
     </div>
     <div class="grow"></div>
     <button class="icon-btn" onclick="openQuick()" title="Cargar una interacción en 2 segundos">⚡ Interacción</button>
@@ -190,6 +229,7 @@
     <div id="board" class="board"></div>
     <div id="agenda" class="hide"></div>
     <div id="table" class="hide"></div>
+    <div id="workorders" class="hide"></div>
   </main>
 </div>
 
@@ -205,8 +245,10 @@
       <div><label>Etapa del funnel</label><select id="f_stage"></select></div>
       <div><label>País</label><input id="f_country" placeholder="Ej: Argentina"></div>
 
-      <div class="sect">Tareas <button class="icon-btn btn-primary" style="margin-left:8px" onclick="addTaskRow()">＋ Agregar tarea</button></div>
-      <div class="full" id="tasksContainer"></div>
+      <div class="sect">Próxima acción</div>
+      <div><label>Acción</label><select id="f_action"></select></div>
+      <div><label>Fecha</label><input id="f_date" type="date"></div>
+      <div><label>Hora (opcional)</label><input id="f_time" type="time"></div>
       <div class="full"><label>Nota / detalle</label><textarea id="f_notes" placeholder="Ej: Enviar dossier de la serie nueva…"></textarea></div>
 
       <div class="sect">Métricas</div>
@@ -283,13 +325,14 @@
 <!-- BUDGET BUILDER MODAL -->
 <div class="overlay top" id="bOverlay">
   <div class="modal wide">
-    <div class="modal-head"><h2>Crear presupuesto</h2><button class="x" onclick="closeBudget()">×</button></div>
+    <div class="modal-head"><h2 id="bTitle">Crear presupuesto</h2><button class="x" onclick="closeBudget()">×</button></div>
     <div class="modal-body">
       <div><label>Cliente</label><input id="b_client" readonly></div>
       <div><label>Fecha</label><input id="b_date" type="date"></div>
       <div><label>Válido hasta</label><input id="b_valid" type="date"></div>
       <div><label>Moneda</label><select id="b_cur"><option>USD</option><option>ARS</option><option>EUR</option></select></div>
-      <div class="sect" style="padding-left:0">Ítems <button class="icon-btn" onclick="addBItem()">＋ Agregar ítem</button></div>
+      <div><label>Plazo de elaboración (días corridos)</label><input id="b_plazo" type="number" min="1" placeholder="Ej: 30"></div>
+      <div class="sect" style="padding-left:0">Ítems <button class="icon-btn" onclick="addBItem()">＋ Ítem libre</button> <button class="icon-btn" onclick="openProdCatalog()">📦 Desde catálogo</button></div>
       <div class="full" id="bItems"></div>
       <div class="full btot">Total <span class="val" id="bTotal">$0</span></div>
       <div class="full"><label>Condiciones de pago</label><textarea id="b_pay" style="min-height:80px"></textarea></div>
@@ -331,26 +374,116 @@
         <button class="icon-btn btn-primary" id="gcalBtn" style="width:100%" onclick="gToggle()">Conectar Google Calendar</button>
         <div id="gcalStatus" style="color:var(--muted);font-size:12px;margin-top:8px"></div>
       </div>
-      <div class="sect">Importar interacciones (Gmail + YouTube)</div>
-      <div class="full">
-        <button class="icon-btn btn-primary" id="impBtn" style="width:100%" onclick="impToggle()">Conectar Gmail + YouTube</button>
-        <button class="icon-btn hide" id="impNowBtn" style="width:100%;margin-top:8px" onclick="impNow()">Traer ahora</button>
-        <div id="impStatus" style="color:var(--muted);font-size:12px;margin-top:8px"></div>
-      </div>
-      <div class="full"><label>Casilla de negocio a importar (solo mails dirigidos a esta dirección)</label>
-        <input id="s_impto" placeholder="tesi@tesistudio.com">
-        <div style="color:var(--muted);font-size:11.5px;margin-top:4px">Dejala vacía para traer todos los mails entrantes. Podés poner una dirección (tesi@tesistudio.com) o un dominio (@tesistudio.com).</div>
-      </div>
       <div class="full" style="color:var(--muted);font-size:12.5px;line-height:1.6">
         <b style="color:var(--txt)">Backup en Google Drive:</b> usá <b>Exportar Excel</b> y guardá el archivo en tu Drive cuando quieras un respaldo extra.
       </div>
       <div class="full hide" id="logoutRow"><button class="icon-btn" style="width:100%" onclick="cloudLogout()">Cerrar sesión</button></div>
+      <div class="sect">Tasa horaria (para órdenes de trabajo)</div>
+      <div><label>ARS / hora</label><input id="s_rate_ars" type="number" min="0" placeholder="0"></div>
+      <div><label>USD / hora</label><input id="s_rate_usd" type="number" min="0" placeholder="0"></div>
+      <div><label>EUR / hora</label><input id="s_rate_eur" type="number" min="0" placeholder="0"></div>
       <div class="full"><button class="danger" style="width:100%" onclick="wipe()">Borrar todos los datos</button></div>
     </div>
     <div class="modal-foot"><div class="grow"></div><div class="right">
       <button class="icon-btn" onclick="closeSettings()">Cerrar</button>
       <button class="icon-btn btn-primary" onclick="saveSettings()">Guardar</button>
     </div></div>
+  </div>
+</div>
+
+<!-- PRODUCT CATALOG MODAL -->
+<div class="overlay top" id="prodOverlay">
+  <div class="modal">
+    <div class="modal-head"><h2>Catálogo de productos</h2><button class="x" onclick="closeProdCatalog()">×</button></div>
+    <div class="modal-body">
+      <div class="full" id="prodList"></div>
+      <div class="sect" style="padding-left:0">Nuevo producto</div>
+      <div class="full"><label>Nombre</label><input id="np_name" placeholder="Ej: Miniatura bordada 10×10 cm"></div>
+      <div class="full"><label>Descripción (para el presupuesto)</label><input id="np_desc" placeholder="Descripción"></div>
+      <div class="full"><label>Técnica / medidas</label><input id="np_med" placeholder="Ej: Bordado en hilo · 10×10 cm · cúpula acrílica"></div>
+      <div><label>Precio base</label><input id="np_price" type="number" min="0" placeholder="0"></div>
+      <div><label>Moneda</label><select id="np_cur"><option>USD</option><option>ARS</option><option>EUR</option></select></div>
+    </div>
+    <div class="modal-foot"><div class="grow"></div><div class="right">
+      <button class="icon-btn" onclick="closeProdCatalog()">Cerrar</button>
+      <button class="icon-btn btn-primary" onclick="saveNewProduct()">Guardar producto</button>
+    </div></div>
+  </div>
+</div>
+
+<!-- WORK ORDER MODAL -->
+<div class="overlay top" id="woOverlay">
+  <div class="modal wide">
+    <div class="modal-head"><h2 id="woTitle">Nueva orden de trabajo</h2><button class="x" onclick="closeWorkOrder()">×</button></div>
+    <div class="modal-body" id="woBody">
+      <div class="full"><label>Título de la obra *</label><input id="wo_title" placeholder="Ej: Miniatura bordada · Laura M." oninput="woBodyDirty()"></div>
+      <div><label>Cliente</label><input id="wo_client" readonly></div>
+      <div><label>Presupuesto N°</label><input id="wo_budgetnum" placeholder="—"></div>
+      <div><label>Etapa</label><select id="wo_stage">
+        <option value="cola">En cola</option><option value="produccion">En producción</option>
+        <option value="terminada">Terminada</option><option value="entregada">Entregada</option>
+      </select></div>
+      <div class="sect">Precio y plazo</div>
+      <div><label>Precio de venta</label><input id="wo_price" type="number" min="0" placeholder="0" oninput="calcWOMargin()"></div>
+      <div><label>Moneda</label><select id="wo_cur" onchange="calcWOMargin()"><option>USD</option><option>ARS</option><option>EUR</option></select></div>
+      <div><label>Plazo (días corridos)</label><input id="wo_plazo" type="number" min="1" placeholder="30" oninput="updateShipDate()"></div>
+      <div><label>Fecha confirmación de pago</label><input id="wo_confirmed" type="date" onchange="updateShipDate()"></div>
+      <div class="full" id="wo_deadlineRow" style="display:none">
+        <div id="wo_deadlineInfo" style="background:var(--panel);border:1px solid var(--line);border-radius:9px;padding:10px 12px;font-size:13px"></div>
+      </div>
+      <div class="sect">Tareas de producción <button class="icon-btn" onclick="addPTask()">＋ Tarea</button></div>
+      <div class="full" id="wo_ptasks"></div>
+      <div class="sect">Mano de obra</div>
+      <div class="full">
+        <div style="margin-bottom:10px">
+          <label style="font-size:12px;color:var(--muted)">BORDADO · horas × $/hora</label>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:4px">
+            <input id="wo_lb_h" type="number" min="0" step="0.5" placeholder="Horas" oninput="calcWOMargin()">
+            <input id="wo_lb_r" type="number" min="0" placeholder="$/hora" oninput="calcWOMargin()">
+          </div>
+        </div>
+        <div>
+          <label style="font-size:12px;color:var(--muted)">HOJA DE ORO · horas × $/hora</label>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:4px">
+            <input id="wo_lh_h" type="number" min="0" step="0.5" placeholder="Horas" oninput="calcWOMargin()">
+            <input id="wo_lh_r" type="number" min="0" placeholder="$/hora" oninput="calcWOMargin()">
+          </div>
+        </div>
+      </div>
+      <div class="sect">Materiales <button class="icon-btn" onclick="addMatRow()">＋ Agregar</button></div>
+      <div class="full">
+        <table class="mat-table"><thead><tr><th>Material</th><th>Medidas</th><th>Cant.</th><th>Precio unit.</th><th>Subtotal</th><th></th></tr></thead>
+        <tbody id="wo_matbody"></tbody></table>
+      </div>
+      <div class="sect">Gastos fijos</div>
+      <div class="full"><input id="wo_gf" type="number" min="0" placeholder="0" oninput="calcWOMargin()" style="max-width:180px"></div>
+      <div class="sect">Resumen financiero</div>
+      <div class="full fin-summary" id="wo_finsummary"></div>
+      <div class="sect">Notas</div>
+      <div class="full"><textarea id="wo_notes" style="min-height:80px" placeholder="Notas internas sobre la obra…"></textarea></div>
+      <div class="sect">Ficha técnica</div>
+      <div class="full">
+        <div class="filebox" onclick="document.getElementById('woFichaInput').click()">📄 Adjuntar ficha técnica</div>
+        <input id="woFichaInput" type="file" multiple class="hide" onchange="addWOFicha(event)">
+        <div id="wo_fichaList"></div>
+      </div>
+      <div class="sect">Imágenes</div>
+      <div class="full">
+        <div class="filebox" onclick="document.getElementById('woImgsInput').click()">🖼️ Agregar imágenes</div>
+        <input id="woImgsInput" type="file" accept="image/*" multiple class="hide" onchange="addWOImgs(event)">
+        <div class="thumbs" id="wo_thumbs"></div>
+      </div>
+      <div class="sect">Historial</div>
+      <div class="full" id="wo_loglist"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="danger hide" id="woDelBtn" onclick="deleteWorkOrder()">Eliminar</button>
+      <div class="grow"></div>
+      <div class="right">
+        <button class="icon-btn" onclick="closeWorkOrder()">Cancelar</button>
+        <button class="icon-btn btn-primary" onclick="saveWorkOrder()">Guardar</button>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -384,14 +517,27 @@ const ITYPES=['','Comentario','DM / mensaje','Reacción a historia','Mención / 
 const SRC_ICON={'WhatsApp':'🟢','Instagram':'📷','Facebook':'🔵','TikTok':'🎵','LinkedIn':'💼','YouTube':'▶️','Email':'✉️','Sitio web':'🌐','Reunión/Evento':'🤝','Referido':'⭐','Meta Ads':'📣','Otro':'•'};
 const ACTIONS=['','Cita para cotizar obra (presencial)','Cita para cotizar obra (virtual)','Contacto por WhatsApp','Enviar mail','Llamar','Reunión comercial','Reunión RRPP','Confeccionar propuesta','Enviar dossier/portfolio','Enviar presupuesto','Coordinar entrega de obra','Postventa/agradecer','Pedir referido','Follow up'];
 const KEY='crm_obra_v3',PINKEY='crm_pin_v1',EVKEY='crm_events_v2',ARTKEY='crm_artist',SEQKEY='crm_budget_seq';
-const BRAND={name:'Teresita Castelli — Tesi Studio',tagline:'Arte textil de autoría que enriquece superficies y vuelve protagonista al secreto, para quienes atesoran su curiosidad más íntima.',
+const BRAND={name:'Teresita Castelli — Tesi Studio',tagline:'Hecho a mano con hilo, oro y paciencia.',
   city:'Buenos Aires, Argentina · est. 2019',wa:'+54 9 11 5577-1131',waUrl:'https://wa.me/5491155771131',
-  email:'tesi@tesistudio.com',ig:'@tesistudio',igUrl:'https://instagram.com/tesistudio',
+  email:'teresitagcastelli@gmail.com',ig:'@tesistudio',igUrl:'https://instagram.com/tesistudio',
   web:'tesistudio.com',webUrl:'https://www.tesistudio.com',cuit:'23386181144'};
 const PAY_DEFAULT='El pago es del 100% del valor de la obra, por transferencia bancaria o en efectivo. La elaboración de las obras a pedido comienza una vez confirmado el pago. Si el importe está expresado en dólares y se abona en pesos argentinos, se toma el tipo de cambio dólar billete VENDEDOR del Banco de la Nación Argentina (BNA) del día de pago.';
-const SHIP_DEFAULT='El costo de envío NO está incluido en este presupuesto: se cotiza una vez confirmado el pedido y abonada la obra, según peso y provincia de destino. Envíos a todo el país por correo oficial y servicios de logística, con seguimiento incluido. El embalaje SÍ está incluido (film, papel de maíz, burbuja, cartón rígido y caja a medida). Cada obra se entrega firmada y con certificado de autenticidad. Por ser piezas elaboradas a pedido, no tienen devolución. Ante una obra dañada, escribir por WhatsApp dentro de las 48 hs con fotos y se gestiona la solución sin costo.';
+const SHIP_DEFAULT='El costo de envío NO está incluido en este presupuesto: se cotiza una vez confirmado el pedido y abonada la obra, según peso y provincia de destino. Envíos a todo el país por servicios de logística. El embalaje SÍ está incluido. Cada obra se entrega firmada y con certificado de autenticidad. Por ser piezas elaboradas a pedido, no tienen devolución.';
 
 let data=[],events=[],view='board',editingId=null,draftAtt={budgets:[],imgs:[]},dirty=false,pendingAction=null,editingEvent=null;
+let products=[]; // {id, name, desc, med, prices:[{date,cur,val}]}
+let workOrders=[];
+let hourlyRates={ARS:0,USD:0,EUR:0};
+let editingBudgetKey=null;
+let editingWOId=null;
+let draftWOAtt={fichaTecnica:[],imgs:[]};
+const WO_STAGES=[
+  {id:'cola',name:'En cola',color:'#9a98ad'},
+  {id:'produccion',name:'En producción',color:'#d99a3c'},
+  {id:'terminada',name:'Terminada',color:'#4fae7a'},
+  {id:'entregada',name:'Entregada',color:'#8aa0b5'}];
+const WO_PTASK_DEFAULTS=['Compra de insumos','Bordar obra','Dorar a la hoja','Encargar cúpula','Montar en cúpula','Embalar'];
+const WO_MAT_DEFAULTS=[{name:'Hoja de oro'},{name:'Placa de MDF'},{name:'Cúpula de acrílico'},{name:'Insumos bordado'}];
 
 /* ============ IndexedDB ============ */
 function openDB(){return new Promise((res,rej)=>{const r=indexedDB.open('crm_files',1);
@@ -413,32 +559,25 @@ const PINSALT='tesi_';
 const GCLIENT_ID='426001960634-u76d6t9ve5iqaaql93jh573j0d3d2p3k.apps.googleusercontent.com';
 let sb=null,cloudUser=null,saveTimer=null;
 let gToken=null,gTokenClient=null,gExpiry=0,gPendingConsent=false,gEvents=[];
-const GIMPSCOPE='https://www.googleapis.com/auth/gmail.readonly https://www.googleapis.com/auth/youtube.readonly';
-let gImpToken=null,gImpExpiry=0,gImporting=false,gImportedThisSession=false;
-let importOn=localStorage.getItem('imp_on')==='1';
-let gSeen={gmail:[],yt:[]};
 let gcalId=localStorage.getItem('gcal_id')||null;
 let gConnected=localStorage.getItem('gcal_connected')==='1';
 function migrateContact(c){if(!c.att)c.att={budgets:[],imgs:[]};
   if(c.att.budget!==undefined){if(c.att.budget)c.att.budgets=[c.att.budget];delete c.att.budget;}
-  if(!c.att.budgets)c.att.budgets=[];if(!c.att.imgs)c.att.imgs=[];if(!c.log)c.log=[];
-  if(!c.tasks){c.tasks=[];
-    if(c.action||c.date){const t={id:id(),action:c.action||'',date:c.date||'',time:c.time||'',done:false};
-      if(c.gev)t.gev=c.gev;c.tasks.push(t);}
-    delete c.action;delete c.date;delete c.time;delete c.gev;}}
+  if(!c.att.budgets)c.att.budgets=[];if(!c.att.imgs)c.att.imgs=[];if(!c.log)c.log=[];}
 function loadData(){try{data=JSON.parse(localStorage.getItem(KEY))||null;}catch(e){data=null;}
   if(!data){data=seed();save();}
   data.forEach(migrateContact);
   try{events=JSON.parse(localStorage.getItem(EVKEY))||seedEvents();}catch(e){events=seedEvents();}
+  products=[];workOrders=[];hourlyRates={ARS:0,USD:0,EUR:0};
   saveEvents();}
 function save(){try{localStorage.setItem(KEY,JSON.stringify(data));}catch(e){}scheduleCloud();}
 function saveEvents(){try{localStorage.setItem(EVKEY,JSON.stringify(events));}catch(e){}scheduleCloud();}
 function getPin(){return localStorage.getItem(PINKEY)||'2108';}
 function artist(){return localStorage.getItem(ARTKEY)||BRAND.name;}
-function nextSeq(){let n=Math.max(+localStorage.getItem(SEQKEY)||0,104)+1;localStorage.setItem(SEQKEY,n);scheduleCloud();return n;}
+function nextSeq(){let n=(+localStorage.getItem(SEQKEY)||0)+1;localStorage.setItem(SEQKEY,n);scheduleCloud();return n;}
 function scheduleCloud(){if(!CLOUD||!cloudUser)return;setSync('wait');clearTimeout(saveTimer);saveTimer=setTimeout(cloudSave,800);}
 async function cloudSave(){if(!CLOUD||!cloudUser||!sb)return;
-  const state={contacts:data,events,artist:artist(),seq:+localStorage.getItem(SEQKEY)||0,importOn,seen:gSeen,importTo:localStorage.getItem('imp_to')||''};
+  const state={contacts:data,events,artist:artist(),seq:+localStorage.getItem(SEQKEY)||0,products,workOrders,hourlyRates};
   try{const{error}=await sb.from('crm_state').upsert({user_id:cloudUser.id,state,updated_at:new Date().toISOString()});
     if(error)throw error;setSync('ok');}catch(e){setSync('err');console.error('cloudSave',e);}}
 async function cloudLoad(){if(!sb||!cloudUser)return;
@@ -446,9 +585,9 @@ async function cloudLoad(){if(!sb||!cloudUser)return;
     if(error)throw error;
     if(row&&row.state){const s=row.state;data=Array.isArray(s.contacts)?s.contacts:[];events=Array.isArray(s.events)?s.events:[];
       if(s.artist)localStorage.setItem(ARTKEY,s.artist);if(s.seq!=null)localStorage.setItem(SEQKEY,s.seq);
-      gSeen={gmail:(s.seen&&Array.isArray(s.seen.gmail))?s.seen.gmail:[],yt:(s.seen&&Array.isArray(s.seen.yt))?s.seen.yt:[]};
-      if(s.importOn){importOn=true;localStorage.setItem('imp_on','1');}
-      if(s.importTo!=null)localStorage.setItem('imp_to',s.importTo);
+      if(Array.isArray(s.products))products=s.products;
+      if(Array.isArray(s.workOrders))workOrders=s.workOrders;
+      if(s.hourlyRates)hourlyRates=Object.assign({ARS:0,USD:0,EUR:0},s.hourlyRates);
       data.forEach(migrateContact);setSync('ok');}
     else{data=seed();events=seedEvents();data.forEach(migrateContact);await cloudSave();}
   }catch(e){console.error('cloudLoad',e);toast('No pude leer la nube; reintentá');data=data&&data.length?data:[];events=events||[];}}
@@ -483,7 +622,7 @@ async function cloudMagic(){const email=(document.getElementById('cemail').value
   document.getElementById('magicSent').classList.remove('hide');toast('Enlace enviado ✉️');}
 async function afterAuth(){try{if(cloudUser&&cloudUser.email)localStorage.setItem('crm_last_email',cloudUser.email);}catch(e){}
   document.getElementById('gate').classList.add('hide');document.getElementById('app').classList.remove('hide');
-  await cloudLoad();buildSelects();render();setGcalUI();gTryAuto();impAuto();}
+  await cloudLoad();buildSelects();render();setGcalUI();gTryAuto();}
 async function cloudLogout(){try{await sb.auth.signOut();}catch(e){}location.reload();}
 function init(){
   if(CLOUD){try{sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON);}catch(e){console.error(e);}
@@ -507,7 +646,7 @@ function seed(){return [
   mk('Ornella Ruiz D\u00edaz','Artistas','Instagram','@ornella.ruizdiaz','','','Reuni\u00f3n RRPP','Artista.'),
   mk('We Make it Pop','Prensa','Instagram','@wemakeit_pop','','','Reuni\u00f3n RRPP','Prensa / difusi\u00f3n (@wemakeit_pop).'),
 ];}
-function mk(name,seg,src,ig,phone,email,action,notes){return {id:id(),name,seg,src,stage:'nuevo',country:'Argentina',val:0,cost:0,phone,email,ig,address:'',tasks:action?[{id:id(),action,date:'',time:'',done:false}]:[],notes,partner:'',kids:'',bday:'',interests:'',att:{budgets:[],imgs:[]},log:[{ts:'2026-06-10T16:00:00.000Z',text:'Contacto creado (importado de \u201cCRM casero junio\u201d)'}]};}
+function mk(name,seg,src,ig,phone,email,action,notes){return {id:id(),name,seg,src,stage:'nuevo',country:'Argentina',val:0,cost:0,phone,email,ig,address:'',action,date:'',notes,partner:'',kids:'',bday:'',interests:'',att:{budgets:[],imgs:[]},log:[{ts:'2026-06-10T16:00:00.000Z',text:'Contacto creado (importado de \u201cCRM casero junio\u201d)'}]};}
 function seedEvents(){return [];}
 function id(){return 'c'+Math.random().toString(36).slice(2,9);}
 
@@ -519,17 +658,21 @@ function buildSelects(){const opt=(arr,sel)=>arr.map(v=>`<option ${v===sel?'sele
   document.getElementById('f_src').innerHTML=opt(SOURCES);
   document.getElementById('f_tipo').innerHTML=ITYPES.map(t=>`<option value="${t}">${t||'— sin tipo —'}</option>`).join('');
   document.getElementById('f_stage').innerHTML=STAGES.map(s=>`<option value="${s.id}">${s.name}</option>`).join('');
+  document.getElementById('f_action').innerHTML=ACTIONS.map(a=>`<option value="${a}">${a||'— sin acción —'}</option>`).join('');
   document.getElementById('q_src').innerHTML=opt(SOURCES,'Instagram');
   document.getElementById('q_tipo').innerHTML=ITYPES.map(t=>`<option value="${t}">${t||'— sin tipo —'}</option>`).join('');}
 
 /* ============ VIEW ============ */
 function setView(v){view=v;
-  ['Board','Agenda','Table'].forEach(n=>document.getElementById('tab'+n).classList.toggle('on',v===n.toLowerCase()));
+  ['Board','Agenda','Table','Workorders'].forEach(n=>document.getElementById('tab'+n)&&document.getElementById('tab'+n).classList.toggle('on',v===n.toLowerCase()));
   document.getElementById('board').classList.toggle('hide',v!=='board');
   document.getElementById('agenda').classList.toggle('hide',v!=='agenda');
   document.getElementById('table').classList.toggle('hide',v!=='table');
-  document.getElementById('stats').classList.toggle('hide',v==='agenda');
+  document.getElementById('workorders').classList.toggle('hide',v!=='workorders');
+  document.getElementById('stats').classList.toggle('hide',v==='agenda'||v==='workorders');
+  document.getElementById('toolbar').classList.toggle('hide',v==='workorders');
   document.getElementById('addEvtBtn').style.display=(v==='agenda'&&!gConnected)?'inline-flex':'none';
+  if(v==='workorders'){renderWorkOrders();return;}
   render();if(v==='agenda'&&gConnected)gRefreshAgenda();}
 
 function filtered(){const q=(document.getElementById('search').value||'').toLowerCase();
@@ -565,23 +708,20 @@ function renderBoard(list){const b=document.getElementById('board');b.innerHTML=
       if(c&&c.stage!==s.id){const old=c.stage;c.stage=s.id;pushLog(c,'Etapa: '+stageName(old)+' → '+s.name);save();render();if(gConnected)gPushTask(c);toast('Movido a "'+s.name+'"');}});
     b.appendChild(col);});}
 function cardEl(c){const el=document.createElement('div');el.className='card';el.draggable=true;
-  const nt=(c.tasks||[]).filter(t=>!t.done&&t.date).sort((a,b)=>a.date.localeCompare(b.date))[0]||
-            (c.tasks||[]).filter(t=>!t.done&&t.action)[0]||null;
-  const od=nt&&nt.date&&nt.date<today()&&!['ganado','perdido'].includes(c.stage);
+  const od=c.date&&c.date<today()&&!['ganado','perdido'].includes(c.stage);
   const nb=(c.att&&c.att.budgets&&c.att.budgets.length)?`<span class="gen-badge">📄 ${c.att.budgets.length}</span>`:'';
   el.innerHTML=`<div class="name"><span>${esc(c.name)}</span>${nb}</div>
     <div class="meta"><span class="badge" style="background:${(SEG_COLORS[c.seg]||'#888')}22;color:${SEG_COLORS[c.seg]||'#aaa'}">${esc(c.seg||'Sin clasificar')}</span>
       <span class="src">${SRC_ICON[c.src]||''} ${esc(c.src)}${c.tipo?' · '+esc(c.tipo):''}</span></div>
-    ${nt&&nt.action?`<div class="act">→ ${esc(nt.action)}</div>`:''}
-    <div class="row"><span class="val">${money(c.val)}</span>${nt&&nt.date?`<span class="next ${od?'over':''}">📅 ${fmtDate(nt.date)}</span>`:''}</div>`;
+    ${c.action?`<div class="act">→ ${esc(c.action)}</div>`:''}
+    <div class="row"><span class="val">${money(c.val)}</span>${c.date?`<span class="next ${od?'over':''}">📅 ${fmtDate(c.date)}</span>`:''}</div>`;
   el.addEventListener('dragstart',e=>{e.dataTransfer.setData('id',c.id);el.classList.add('drag');});
   el.addEventListener('dragend',()=>el.classList.remove('drag'));
   el.addEventListener('click',()=>openContact(c.id));return el;}
 
 function renderAgenda(list){
-  const tasks=[];
-  list.filter(c=>!['ganado','perdido'].includes(c.stage)).forEach(c=>{
-    (c.tasks||[]).filter(t=>!t.done&&t.date).forEach(t=>tasks.push({type:'task',date:t.date,c,t}));});
+  const tasks=list.filter(c=>c.date&&!['ganado','perdido'].includes(c.stage))
+    .map(c=>({type:'task',date:c.date,c}));
   const psrc=gConnected?gEvents:events;
   const evs=psrc.map(e=>({type:'personal',date:e.date,e}));
   const all=tasks.concat(evs).sort((a,b)=>a.date.localeCompare(b.date)||(a.type==='personal'?1:-1));
@@ -599,14 +739,14 @@ function renderAgenda(list){
   groups.forEach(g=>{const items=all.filter(g.f);if(!items.length)return;any=true;
     html+=`<div class="agenda-group ${g.urgent?'urgent':''}"><h3>${g.t}<span class="pill">${items.length}</span></h3>`;
     items.forEach(x=>{const over=x.date<tdy;
-      if(x.type==='task'){const c=x.c;const t=x.t;const col=SEG_COLORS[c.seg]||'#888';
+      if(x.type==='task'){const c=x.c;const col=SEG_COLORS[c.seg]||'#888';
         html+=`<div class="todo"><span class="tdot" style="background:${col}"></span>
           <div class="ti" onclick="openContact('${c.id}')" style="cursor:pointer">
-            <b>${esc(t.action||'Acción')} · ${esc(c.name)}</b>
+            <b>${esc(c.action||'Acción')} · ${esc(c.name)}</b>
             <div class="sub">${esc(c.seg||'Sin clasificar')} · ${SRC_ICON[c.src]||''} ${esc(c.src)}${c.notes?' · '+esc(c.notes.slice(0,50)):''}</div></div>
-          <span class="when ${over?'over':''}">${fmtFull(t.date)}${t.time?' · '+t.time+' hs':''}</span>
-          <button class="mini ok" onclick="event.stopPropagation();markDone('${c.id}','${t.id}')">✓ Hecho</button>
-          <button class="mini" onclick="event.stopPropagation();reprogram('${c.id}','${t.id}',this)">Reprogramar</button></div>`;
+          <span class="when ${over?'over':''}">${fmtFull(c.date)}${c.time?' · '+c.time+' hs':''}</span>
+          <button class="mini ok" onclick="event.stopPropagation();markDone('${c.id}')">✓ Hecho</button>
+          <button class="mini" onclick="event.stopPropagation();reprogram('${c.id}',this)">Reprogramar</button></div>`;
       }else{const e=x.e;const clk=!gConnected;
         html+=`<div class="todo personal"><span class="tdot" style="background:#9a98ad"></span>
           <div class="ti" ${clk?`onclick="openEvent('${e.id}')" style="cursor:pointer"`:''}>
@@ -616,27 +756,23 @@ function renderAgenda(list){
     html+='</div>';});
   if(!any)html+='<div class="empty-col" style="padding:40px">No hay tareas ni eventos. Asigná una "Próxima acción" con fecha.</div>';
   a.innerHTML=html;}
-function markDone(cid,tid){const c=data.find(x=>x.id===cid);if(!c)return;
-  const t=(c.tasks||[]).find(x=>x.id===tid);if(!t)return;
-  pushLog(c,'✓ Hecho: '+(t.action||'tarea')+(t.date?' ('+fmtLong(t.date)+')':''));
-  t.done=true;t.date='';save();if(gConnected)gPushTask(c);render();toast('¡Hecho! ✓');}
-function reprogram(cid,tid,btn){const c=data.find(x=>x.id===cid);if(!c)return;
-  const t=(c.tasks||[]).find(x=>x.id===tid);if(!t)return;
-  const inp=document.createElement('input');inp.type='date';inp.value=t.date||today();
+function markDone(id){const c=data.find(x=>x.id===id);if(!c)return;
+  pushLog(c,'✓ Hecho: '+(c.action||'tarea')+(c.date?' ('+fmtLong(c.date)+')':''));
+  c.action='';c.date='';save();if(gConnected)gPushTask(c);render();toast('¡Hecho! ✓');}
+function reprogram(id,btn){const c=data.find(x=>x.id===id);if(!c)return;
+  const inp=document.createElement('input');inp.type='date';inp.value=c.date||today();
   inp.className='mini';inp.style.padding='4px';
-  inp.onchange=()=>{const old=t.date;t.date=inp.value;pushLog(c,'Reprogramada: '+(old||'—')+' → '+inp.value);save();if(gConnected)gPushTask(c);render();toast('Reprogramada ✓');};
+  inp.onchange=()=>{const old=c.date;c.date=inp.value;pushLog(c,'Reprogramada: '+(old||'—')+' → '+inp.value);save();if(gConnected)gPushTask(c);render();toast('Reprogramada ✓');};
   btn.parentNode.replaceChild(inp,btn);inp.focus();if(inp.showPicker){try{inp.showPicker();}catch(e){}}}
 
 function renderTable(list){const t=document.getElementById('table');const sn=i=>STAGES.find(s=>s.id===i)?.name||i;
-  const ft=c=>(c.tasks||[]).filter(x=>!x.done&&x.date).sort((a,b)=>a.date.localeCompare(b.date))[0]||
-              (c.tasks||[]).find(x=>!x.done&&x.action)||null;
   t.innerHTML=`<table><thead><tr><th>Nombre</th><th>Segmento</th><th>Origen</th><th>País</th><th>Etapa</th><th>Acción</th><th>Valor</th><th>Fecha</th></tr></thead>
-    <tbody>${list.map(c=>{const nt=ft(c);return`<tr onclick="openContact('${c.id}')">
+    <tbody>${list.map(c=>`<tr onclick="openContact('${c.id}')">
       <td><b>${esc(c.name)}</b></td>
       <td><span class="badge" style="background:${(SEG_COLORS[c.seg]||'#888')}22;color:${SEG_COLORS[c.seg]||'#aaa'}">${esc(c.seg||'Sin clasificar')}</span></td>
       <td>${SRC_ICON[c.src]||''} ${esc(c.src)}</td><td>${esc(c.country||'—')}</td>
-      <td>${esc(sn(c.stage))}</td><td style="color:var(--accent)">${esc(nt&&nt.action||'—')}</td>
-      <td class="val">${money(c.val)}</td><td>${nt&&nt.date?fmtFull(nt.date):'—'}</td></tr>`;}).join('')}</tbody></table>`;
+      <td>${esc(sn(c.stage))}</td><td style="color:var(--accent)">${esc(c.action||'—')}</td>
+      <td class="val">${money(c.val)}</td><td>${c.date?fmtFull(c.date):'—'}</td></tr>`).join('')}</tbody></table>`;
   if(!list.length)t.innerHTML='<div class="empty-col" style="padding:40px">Sin contactos que coincidan.</div>';}
 
 /* ============ CONTACT MODAL ============ */
@@ -644,7 +780,7 @@ async function openContact(cid){editingId=cid||null;const c=cid?data.find(x=>x.i
   document.getElementById('cTitle').textContent=cid?'Editar contacto':'Nuevo contacto';
   document.getElementById('delBtn').classList.toggle('hide',!cid);
   f('name',c.name);f('seg',cid?(c.seg||''):SEGMENTS[3]);f('src',c.src||'WhatsApp');f('tipo',c.tipo||'');f('stage',c.stage||'nuevo');
-  f('country',c.country);renderTasksUI(c.tasks||[]);f('notes',c.notes);
+  f('country',c.country);f('action',c.action||'');f('date',c.date);f('time',c.time||'');f('notes',c.notes);
   f('val',c.val||'');f('cost',c.cost||'');f('phone',c.phone);f('email',c.email);f('ig',c.ig);
   f('address',c.address);f('partner',c.partner);f('kids',c.kids);f('bday',c.bday);f('interests',c.interests);
   updateMaps();draftAtt=c.att?JSON.parse(JSON.stringify(c.att)):{budgets:[],imgs:[]};
@@ -652,30 +788,13 @@ async function openContact(cid){editingId=cid||null;const c=cid?data.find(x=>x.i
   await renderAtt();renderLog();dirty=false;document.getElementById('cOverlay').classList.add('show');}
 function f(k,v){document.getElementById('f_'+k).value=v==null?'':v;}
 function fv(k){return document.getElementById('f_'+k).value.trim();}
-function taskActionOpts(val){return ACTIONS.map(a=>`<option value="${a}"${a===val?' selected':''}>${a||'— sin acción —'}</option>`).join('');}
-function addTaskRow(task){task=task||{id:id(),action:'',date:'',time:'',done:false};
-  const container=document.getElementById('tasksContainer');
-  const row=document.createElement('div');row.className='task-row';row.dataset.tid=task.id;
-  row.innerHTML=`<select class="t-action">${taskActionOpts(task.action)}</select>`+
-    `<input class="t-date" type="date" value="${task.date||''}">`+
-    `<input class="t-time" type="time" value="${task.time||''}">`+
-    `<button class="task-del" onclick="this.closest('.task-row').remove();dirty=true" title="Quitar tarea">×</button>`;
-  container.appendChild(row);dirty=true;}
-function renderTasksUI(tasks){const c=document.getElementById('tasksContainer');c.innerHTML='';(tasks||[]).forEach(t=>addTaskRow(t));}
-function collectTasks(){
-  const rows=[...document.getElementById('tasksContainer').querySelectorAll('.task-row')];
-  const existing=(editingId?(data.find(x=>x.id===editingId)||{}).tasks:[]) ||[];
-  return rows.map(r=>{const tid=r.dataset.tid;const prev=existing.find(t=>t.id===tid)||{};
-    return {id:tid,action:r.querySelector('.t-action').value,date:r.querySelector('.t-date').value,
-      time:r.querySelector('.t-time').value,done:prev.done||false,...(prev.gev?{gev:prev.gev}:{})};
-  }).filter(t=>t.action||t.date);}
 document.getElementById('cBody').addEventListener('input',()=>dirty=true);
 document.getElementById('cBody').addEventListener('change',()=>dirty=true);
 function updateMaps(){const a=fv('address');const l=document.getElementById('mapsLink');
   if(a){l.href='https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(a);l.classList.remove('hide');}else l.classList.add('hide');}
 
 function collect(){return {name:fv('name'),seg:fv('seg'),src:fv('src'),tipo:fv('tipo'),stage:fv('stage'),country:fv('country'),
-  tasks:collectTasks(),notes:fv('notes'),val:+fv('val')||0,cost:+fv('cost')||0,
+  action:fv('action'),date:fv('date'),time:fv('time'),notes:fv('notes'),val:+fv('val')||0,cost:+fv('cost')||0,
   phone:fv('phone'),email:fv('email'),ig:fv('ig'),address:fv('address'),
   partner:fv('partner'),kids:fv('kids'),bday:fv('bday'),interests:fv('interests'),att:draftAtt};}
 function stageName(idv){return STAGES.find(s=>s.id===idv)?.name||idv;}
@@ -687,7 +806,7 @@ function closeQuick(){document.getElementById('qOverlay').classList.remove('show
 function saveQuick(){const name=document.getElementById('q_name').value.trim();
   if(!name){toast('Poné un nombre o handle');return;}
   const obj={id:id(),name,seg:'',src:document.getElementById('q_src').value,tipo:document.getElementById('q_tipo').value,
-    stage:'interaccion',country:'',tasks:[],notes:document.getElementById('q_notes').value.trim(),
+    stage:'interaccion',country:'',action:'',date:'',time:'',notes:document.getElementById('q_notes').value.trim(),
     val:0,cost:0,phone:'',email:'',ig:'',address:'',partner:'',kids:'',bday:'',interests:'',att:{budgets:[],imgs:[]},log:[]};
   pushLog(obj,'Interacción registrada'+(obj.tipo?' ('+obj.tipo+')':'')+' · '+obj.src);
   data.unshift(obj);
@@ -712,7 +831,7 @@ function saveContact(){if(persist(false)){document.getElementById('cOverlay').cl
 function deleteContact(){if(!editingId)return;
   if(confirm('¿Eliminar este contacto?')){const c=data.find(x=>x.id===editingId);
     if(c&&c.att){(c.att.imgs||[]).forEach(i=>attDel(i.key));(c.att.budgets||[]).forEach(b=>attDel(b.key));}
-    if(c&&gConnected&&gcalId){(c.tasks||[]).forEach(t=>{if(t.gev)try{gApi('/calendars/'+encodeURIComponent(gcalId)+'/events/'+t.gev,{method:'DELETE'});}catch(e){}});}
+    if(c&&c.gev&&gConnected&&gcalId){try{gApi('/calendars/'+encodeURIComponent(gcalId)+'/events/'+c.gev,{method:'DELETE'});}catch(e){}}
     data=data.filter(x=>x.id!==editingId);save();dirty=false;document.getElementById('cOverlay').classList.remove('show');render();toast('Eliminado');}}
 
 /* unsaved-changes flow */
@@ -741,8 +860,13 @@ async function renderAtt(){
   const bl=document.getElementById('budgetList');bl.innerHTML='';
   for(const b of draftAtt.budgets){const url=(await attUrl(b.key,b.name))||'#';
     const div=document.createElement('div');div.className='filechip';
-    div.innerHTML=`${b.generated?'<span class="gen-badge">CRM</span>':'📄'} <a href="${url}" target="_blank">${esc(b.name)}</a><span class="rm" onclick="rmBudget('${b.key}')">✕</span>`;
-    bl.appendChild(div);}
+    let inner=`${b.generated?'<span class="gen-badge">CRM</span>':'📄'} <a href="${url}" target="_blank">${esc(b.name)}</a>`;
+    if(b.generated){
+      inner+=` <button class="mini" onclick="editBudget('${b.key}')">Editar</button>`;
+      inner+=` <button class="mini" onclick="dupBudget('${b.key}')">Duplicar</button>`;
+      if(b.meta)inner+=` <button class="mini" onclick="openWorkOrderFromBudget('${b.key}')">🔧 Orden</button>`;}
+    inner+=`<span class="rm" onclick="rmBudget('${b.key}')">✕</span>`;
+    div.innerHTML=inner;bl.appendChild(div);}
   const th=document.getElementById('thumbs');th.innerHTML='';
   for(const im of draftAtt.imgs){const url=(await attUrl(im.key))||'';
     const d=document.createElement('div');d.className='thumb';
@@ -751,23 +875,32 @@ function rmBudget(k){attDel(k);draftAtt.budgets=draftAtt.budgets.filter(b=>b.key
 function rmImg(k){attDel(k);draftAtt.imgs=draftAtt.imgs.filter(i=>i.key!==k);dirty=true;renderAtt();}
 
 /* ============ BUDGET BUILDER ============ */
-function openBudget(){const name=fv('name');if(!name){toast('Primero poné el nombre del contacto');return;}
-  document.getElementById('b_client').value=name+(fv('country')?' · '+fv('country'):'');
-  document.getElementById('b_date').value=today();document.getElementById('b_valid').value=addDays(today(),15);
-  document.getElementById('bItems').innerHTML='';addBItem();
-  const v=+fv('val'); if(v){bItemRows()[0].querySelector('.bi-price').value=v;}
-  document.getElementById('b_pay').value=PAY_DEFAULT;
-  document.getElementById('b_ship').value=SHIP_DEFAULT;
+function openBudget(existingMeta){const name=fv('name');if(!name){toast('Primero poné el nombre del contacto');return;}
+  editingBudgetKey=null;
+  const meta=existingMeta||null;
+  document.getElementById('bTitle').textContent=meta?'Editar presupuesto N°'+meta.num:'Crear presupuesto';
+  document.getElementById('b_client').value=meta?meta.client:name+(fv('country')?' · '+fv('country'):'');
+  document.getElementById('b_date').value=meta?meta.date:today();
+  document.getElementById('b_valid').value=meta?meta.valid:addDays(today(),15);
+  document.getElementById('b_cur').value=meta?meta.cur:'USD';
+  document.getElementById('b_plazo').value=meta&&meta.plazo?meta.plazo:'';
+  document.getElementById('bItems').innerHTML='';
+  if(meta&&meta.items&&meta.items.length){meta.items.forEach(it=>{addBItem();const rows=bItemRows();const row=rows[rows.length-1];row.querySelector('.bi-desc').value=it.desc||'';row.querySelector('.bi-med').value=it.med||'';row.querySelector('.bi-qty').value=it.qty||1;row.querySelector('.bi-price').value=it.price||0;});}
+  else{addBItem();const v=+fv('val');if(v)bItemRows()[0].querySelector('.bi-price').value=v;}
+  document.getElementById('b_pay').value=meta?meta.pay:PAY_DEFAULT;
+  document.getElementById('b_ship').value=meta?meta.ship:SHIP_DEFAULT;
   recalcBudget();document.getElementById('bOverlay').classList.add('show');}
-function closeBudget(){document.getElementById('bOverlay').classList.remove('show');}
+function closeBudget(){document.getElementById('bOverlay').classList.remove('show');editingBudgetKey=null;}
+function editBudget(key){const b=draftAtt.budgets.find(x=>x.key===key);if(!b||!b.meta){toast('Sin meta guardada');return;}openBudget(b.meta);editingBudgetKey=key;}
+function dupBudget(key){const b=draftAtt.budgets.find(x=>x.key===key);if(!b||!b.meta){toast('Sin meta guardada');return;}openBudget(b.meta);}
 function bItemRows(){return [...document.querySelectorAll('#bItems .bitem')];}
-function addBItem(){const row=document.createElement('div');row.className='bitem';
-  row.innerHTML=`<input class="bi-desc" placeholder="Obra / descripción">
-    <input class="bi-med" placeholder="Técnica / medidas">
+function addBItem(prod){const row=document.createElement('div');row.className='bitem';
+  row.innerHTML=`<input class="bi-desc" placeholder="Obra / descripción" value="${prod?esc(prod.desc||prod.name):''}">
+    <input class="bi-med" placeholder="Técnica / medidas" value="${prod?esc(prod.med||''):''}">
     <input class="bi-qty" type="number" min="1" value="1" oninput="recalcBudget()">
-    <input class="bi-price" type="number" min="0" placeholder="Precio" oninput="recalcBudget()">
+    <input class="bi-price" type="number" min="0" placeholder="Precio" oninput="recalcBudget()" value="${prod&&prod.prices&&prod.prices.length?prod.prices[prod.prices.length-1].val:''}">
     <button class="del" onclick="this.parentNode.remove();recalcBudget()">✕</button>`;
-  document.getElementById('bItems').appendChild(row);}
+  document.getElementById('bItems').appendChild(row);recalcBudget();}
 function recalcBudget(){let tot=0;bItemRows().forEach(r=>{const q=+r.querySelector('.bi-qty').value||0;const p=+r.querySelector('.bi-price').value||0;tot+=q*p;});
   const cur=document.getElementById('b_cur').value;
   document.getElementById('bTotal').textContent=cur+' '+tot.toLocaleString('es-AR');}
@@ -778,12 +911,24 @@ async function generateBudget(){
     .filter(i=>i.price>0||i.desc!=='Obra');
   if(!items.length){toast('Cargá al menos un ítem con precio');return;}
   const cur=document.getElementById('b_cur').value;
-  const seq=nextSeq();const num=String(seq).padStart(4,'0');
+  const plazo=+document.getElementById('b_plazo').value||0;
+  let num,seq;
+  if(editingBudgetKey){const eb=draftAtt.budgets.find(x=>x.key===editingBudgetKey);num=eb&&eb.meta?eb.meta.num:('P-'+String(nextSeq()).padStart(4,'0'));}
+  else{seq=nextSeq();num='P-'+String(seq).padStart(4,'0');}
   const meta={num,client:document.getElementById('b_client').value,date:document.getElementById('b_date').value,
     valid:document.getElementById('b_valid').value,cur,pay:document.getElementById('b_pay').value,
-    ship:document.getElementById('b_ship').value,items,total:items.reduce((s,i)=>s+i.qty*i.price,0)};
-  const blob=buildPDF(meta);const key=fileKey();await attUpload(key,blob,'application/pdf');
-  draftAtt.budgets.push({key,name:`Presupuesto ${num} - ${cleanName(fv('name'))}.pdf`,type:'application/pdf',generated:true});
+    ship:document.getElementById('b_ship').value,plazo,items,total:items.reduce((s,i)=>s+i.qty*i.price,0)};
+  let shipText=meta.ship;
+  if(plazo)shipText+=`\n\nPlazo de elaboración: ${plazo} días corridos desde la confirmación del pago.`;
+  const pdfMeta=Object.assign({},meta,{ship:shipText});
+  const blob=buildPDF(pdfMeta);const key=fileKey();await attUpload(key,blob,'application/pdf');
+  const entry={key,name:`Presupuesto ${num} - ${cleanName(fv('name'))}.pdf`,type:'application/pdf',generated:true,meta};
+  if(editingBudgetKey){
+    const idx=draftAtt.budgets.findIndex(x=>x.key===editingBudgetKey);
+    if(idx>=0){attDel(editingBudgetKey);draftAtt.budgets[idx]=entry;}
+    else draftAtt.budgets.push(entry);
+    editingBudgetKey=null;}
+  else draftAtt.budgets.push(entry);
   const c0=data.find(x=>x.id===editingId);if(c0)pushLog(c0,'Presupuesto '+num+' generado · '+fmtMoney(cur,meta.total));
   persist(true);await renderAtt();renderLog();closeBudget();
   // download a copy
@@ -798,55 +943,52 @@ function buildPDF(m){const{jsPDF}=window.jspdf;const doc=new jsPDF({unit:'mm',fo
   const W=210,H=297,L=18,R=W-18;const ink=[30,30,30],gray=[136,136,136],line=[208,202,191];let y=0;
   // marfil paper
   doc.setFillColor(245,240,231);doc.rect(0,0,W,H,'F');
-  // wordmark centrado (sin línea de ciudad)
+  // wordmark
   doc.setFont(HEAD,'normal');doc.setTextColor(...ink);doc.setFontSize(18);
-  doc.text('TESI GOMEZ CASTELLI',W/2,18,{align:'center',charSpace:1.6});
-  doc.setDrawColor(...ink);doc.setLineWidth(0.4);doc.line(L,24,R,24);
-  // izquierda: título + "de obra original · Para: cliente"
-  doc.setFont(HEAD,'normal');doc.setTextColor(...ink);doc.setFontSize(19);doc.text('Presupuesto',L,38);
-  doc.setFont(BODY,'normal');doc.setTextColor(...gray);doc.setFontSize(9);
-  doc.text('de obra original   ·   Para: '+m.client,L,43.5);
-  // derecha: N° y fechas (alineado al margen derecho, compacto)
-  doc.setFont(BODY,'bold');doc.setTextColor(...ink);doc.setFontSize(10.5);doc.text('N° '+m.num,R,33,{align:'right'});
-  doc.setFont(BODY,'normal');doc.setTextColor(...gray);doc.setFontSize(8.5);
-  doc.text('Emisión: '+fmtLong(m.date),R,38.5,{align:'right'});
-  if(m.valid)doc.text('Válido hasta: '+fmtLong(m.valid),R,43,{align:'right'});
-  y=50;doc.setDrawColor(...line);doc.setLineWidth(0.3);doc.line(L,y,R,y);y+=8;
-  // tabla: columnas con aire; descripción y técnica multilínea
-  const cDesc=L+2,wDesc=46,cMed=70,wMed=52,cCant=138,cUnit=162,cSub=R-1;
+  doc.text('TESI GOMEZ CASTELLI',W/2,16,{align:'center',charSpace:1.6});
+  doc.setFont(BODY,'normal');doc.setTextColor(...gray);doc.setFontSize(8);
+  doc.text(BRAND.city.toUpperCase(),W/2,21,{align:'center',charSpace:1.2});
+  doc.setDrawColor(...ink);doc.setLineWidth(0.4);doc.line(L,26,R,26);
+  // title block
+  doc.setFont(HEAD,'normal');doc.setTextColor(...ink);doc.setFontSize(28);doc.text('Presupuesto',L,42);
+  doc.setFont(BODY,'normal');doc.setTextColor(...gray);doc.setFontSize(10.5);doc.text('de obra original',L,49);
+  doc.setFont(BODY,'bold');doc.setTextColor(...ink);doc.setFontSize(11);doc.text('N° '+m.num,R,38,{align:'right'});
+  doc.setFont(BODY,'normal');doc.setTextColor(...gray);doc.setFontSize(9.5);
+  doc.text('Emisión: '+fmtLong(m.date),R,44,{align:'right'});
+  if(m.valid)doc.text('Válido hasta: '+fmtLong(m.valid),R,49,{align:'right'});
+  y=60;doc.setDrawColor(...line);doc.setLineWidth(0.3);doc.line(L,y,R,y);y+=9;
+  // client
+  doc.setFont(BODY,'bold');doc.setTextColor(...gray);doc.setFontSize(8.5);doc.text('PARA',L,y,{charSpace:1.5});
+  doc.setFont(HEAD,'normal');doc.setTextColor(...ink);doc.setFontSize(14);doc.text(m.client,L,y+7);y+=18;
+  // items header
   doc.setFillColor(30,30,30);doc.rect(L,y-5.5,R-L,8,'F');
-  doc.setFont(BODY,'bold');doc.setTextColor(245,240,231);doc.setFontSize(8);
-  doc.text('DESCRIPCIÓN',cDesc,y);doc.text('TÉCNICA / MEDIDAS',cMed,y);
-  doc.text('CANT',cCant,y,{align:'right'});doc.text('P. UNIT',cUnit,y,{align:'right'});doc.text('SUBTOTAL',cSub,y,{align:'right'});
-  y+=8;const lh=4.5;
-  m.items.forEach(it=>{const sub=it.qty*it.price;
-    doc.setFont(BODY,'normal');doc.setFontSize(9.5);const dl=doc.splitTextToSize(String(it.desc||''),wDesc);
-    doc.setFontSize(9);const ml=doc.splitTextToSize(String(it.med||''),wMed);
-    const rows=Math.max(dl.length,ml.length,1);
-    doc.setFontSize(9.5);doc.setTextColor(...ink);dl.forEach((ln,i)=>doc.text(ln,cDesc,y+i*lh));
-    doc.setFontSize(9);doc.setTextColor(...gray);ml.forEach((ln,i)=>doc.text(ln,cMed,y+i*lh));
-    doc.setFontSize(9);doc.setTextColor(...ink);
-    doc.text(String(it.qty)+' un.',cCant,y,{align:'right'});
-    doc.text(fmtMoney(m.cur,it.price),cUnit,y,{align:'right'});
-    doc.text(fmtMoney(m.cur,sub),cSub,y,{align:'right'});
-    y+=rows*lh+3;doc.setDrawColor(...line);doc.line(L,y-2,R,y-2);});
+  doc.setFont(BODY,'bold');doc.setTextColor(245,240,231);doc.setFontSize(8.5);
+  doc.text('DESCRIPCIÓN',L+2,y,{charSpace:.5});doc.text('TÉCNICA / MEDIDAS',92,y);doc.text('CANT',145,y,{align:'right'});
+  doc.text('P. UNIT',170,y,{align:'right'});doc.text('SUBTOTAL',R-2,y,{align:'right'});y+=9.5;
+  doc.setFont(BODY,'normal');doc.setFontSize(10.5);
+  m.items.forEach(it=>{const sub=it.qty*it.price;doc.setTextColor(...ink);
+    doc.text(String(it.desc).slice(0,42),L+2,y);doc.setTextColor(...gray);doc.setFontSize(9);
+    doc.text(String(it.med||'').slice(0,30),92,y);doc.setTextColor(...ink);doc.setFontSize(10.5);
+    doc.text(String(it.qty),145,y,{align:'right'});
+    doc.text(fmtMoney(m.cur,it.price),170,y,{align:'right'});
+    doc.text(fmtMoney(m.cur,sub),R-2,y,{align:'right'});
+    y+=7;doc.setDrawColor(...line);doc.line(L,y-2.5,R,y-2.5);});
   // total
-  y+=5;doc.setFont(BODY,'bold');doc.setFontSize(10.5);doc.setTextColor(...gray);doc.text('TOTAL',150,y,{align:'right'});
-  doc.setFont(HEAD,'normal');doc.setFontSize(16);doc.setTextColor(...ink);doc.text(fmtMoney(m.cur,m.total),cSub,y,{align:'right'});
+  y+=6;doc.setFont(BODY,'bold');doc.setFontSize(11);doc.setTextColor(...gray);doc.text('TOTAL',120,y,{charSpace:1});
+  doc.setFont(HEAD,'normal');doc.setFontSize(17);doc.setTextColor(...ink);doc.text(fmtMoney(m.cur,m.total),R-2,y,{align:'right'});
   y+=16;
   y=pdfSection(doc,'Condiciones de pago',m.pay,L,R,y,HEAD,BODY,ink,gray);
   y=pdfSection(doc,'Envío y embalaje',m.ship,L,R,y,HEAD,BODY,ink,gray);
-  // footer: contacto centrado SOBRE la línea + frase debajo
-  doc.setFont(BODY,'normal');doc.setFontSize(8.5);
-  const parts=[['WhatsApp '+BRAND.wa,BRAND.waUrl],['Instagram '+BRAND.ig,BRAND.igUrl],[BRAND.web,BRAND.webUrl]];
-  const sep='   ·   ';let total=0;
-  parts.forEach((p,i)=>{total+=doc.getTextWidth(p[0]);if(i<parts.length-1)total+=doc.getTextWidth(sep);});
-  let cx=(W-total)/2;const cyc=H-22;
-  parts.forEach((p,i)=>{doc.setTextColor(...ink);doc.textWithLink(p[0],cx,cyc,{url:p[1]});cx+=doc.getTextWidth(p[0]);
-    if(i<parts.length-1){doc.setTextColor(...gray);doc.text(sep,cx,cyc);cx+=doc.getTextWidth(sep);}});
-  const ly=H-18;doc.setDrawColor(...ink);doc.setLineWidth(0.4);doc.line(L,ly,R,ly);
-  doc.setFont(BODY,'normal');doc.setTextColor(...gray);doc.setFontSize(9);
-  let hy=ly+6;doc.splitTextToSize(BRAND.tagline,R-L).forEach(ln=>{doc.text(ln,W/2,hy,{align:'center'});hy+=4.6;});
+  // footer
+  const fy=H-26;doc.setDrawColor(...ink);doc.setLineWidth(0.4);doc.line(L,fy,R,fy);
+  doc.setFont(BODY,'normal');doc.setTextColor(...gray);doc.setFontSize(9);doc.text(BRAND.tagline,L,fy+6);
+  doc.setFontSize(8);doc.text('CUIT '+BRAND.cuit,R,fy+6,{align:'right'});
+  doc.setFont(BODY,'normal');doc.setTextColor(...ink);doc.setFontSize(8.5);
+  const linkY=fy+13;let lx=L;
+  const link=(label,url,last)=>{doc.textWithLink(label,lx,linkY,{url});lx+=doc.getTextWidth(label)+4;
+    if(!last){doc.setTextColor(...gray);doc.text('·',lx-2.5,linkY);doc.setTextColor(...ink);}};
+  link('WhatsApp '+BRAND.wa,BRAND.waUrl);link('Instagram '+BRAND.ig,BRAND.igUrl);
+  link(BRAND.email,'mailto:'+BRAND.email);link(BRAND.web,BRAND.webUrl,true);
   return doc.output('blob');}
 function pdfSection(doc,title,body,L,R,y,HEAD,BODY,ink,gray){
   doc.setFont(BODY,'bold');doc.setTextColor(...ink);doc.setFontSize(9.5);doc.text(title.toUpperCase(),L,y,{charSpace:1});y+=5.8;
@@ -868,8 +1010,8 @@ function saveEvent(){const title=document.getElementById('e_title').value.trim()
 function deleteEvent(){if(editingEvent&&confirm('¿Eliminar este evento?')){events=events.filter(x=>x.id!==editingEvent);saveEvents();closeEvent();render();toast('Eliminado');}}
 
 /* ============ GOOGLE CALENDAR ============ */
-function gcalUrl(c){const t=(c.tasks||[]).find(x=>!x.done&&x.date);if(!t)return'#';const s=t.date.replace(/-/g,'');const e=addDays(t.date,1).replace(/-/g,'');
-  const text=encodeURIComponent((t.action||'Acción CRM')+' · '+c.name);
+function gcalUrl(c){if(!c.date)return'#';const s=c.date.replace(/-/g,'');const e=addDays(c.date,1).replace(/-/g,'');
+  const text=encodeURIComponent((c.action||'Acción CRM')+' · '+c.name);
   let det=c.notes||'';if(c.phone)det+='\nTel: '+c.phone;if(c.email)det+='\nEmail: '+c.email;if(c.ig)det+='\nIG: '+c.ig;
   return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${text}&dates=${s}/${e}&details=${encodeURIComponent(det)}`;}
 
@@ -894,22 +1036,21 @@ async function gEnsureCal(){if(gcalId)return gcalId;
   let cal=(list.items||[]).find(c=>c.summary==='CRM Tesi');
   if(!cal){cal=await gApi('/calendars',{method:'POST',body:JSON.stringify({summary:'CRM Tesi',timeZone:'America/Argentina/Buenos_Aires'})});}
   gcalId=cal.id;localStorage.setItem('gcal_id',gcalId);return gcalId;}
-function gTaskEvent(c,t){let det=c.notes||'';if(c.phone)det+='\nTel: '+c.phone;if(c.email)det+='\nEmail: '+c.email;
-  const ev={summary:(t.action||'Acción')+' · '+c.name,description:det,extendedProperties:{private:{crmContact:c.id,crmTask:t.id}}};
-  if(t.time){const[h,m]=t.time.split(':');const eh=(+h+1);const ed=eh>=24?addDays(t.date,1):t.date;const ehh=String(eh%24).padStart(2,'0');
-    ev.start={dateTime:t.date+'T'+t.time+':00-03:00',timeZone:'America/Argentina/Buenos_Aires'};
+function gTaskEvent(c){let det=c.notes||'';if(c.phone)det+='\nTel: '+c.phone;if(c.email)det+='\nEmail: '+c.email;
+  const ev={summary:(c.action||'Acción')+' · '+c.name,description:det,extendedProperties:{private:{crmContact:c.id}}};
+  if(c.time){const[h,m]=c.time.split(':');const eh=(+h+1);const ed=eh>=24?addDays(c.date,1):c.date;const ehh=String(eh%24).padStart(2,'0');
+    ev.start={dateTime:c.date+'T'+c.time+':00-03:00',timeZone:'America/Argentina/Buenos_Aires'};
     ev.end={dateTime:ed+'T'+ehh+':'+m+':00-03:00',timeZone:'America/Argentina/Buenos_Aires'};}
-  else{ev.start={date:t.date};ev.end={date:addDays(t.date,1)};}
+  else{ev.start={date:c.date};ev.end={date:addDays(c.date,1)};}
   return ev;}
 async function gPushTask(c){if(!gConnected||!gToken||!gcalId)return;
-  const closed=['ganado','perdido'].includes(c.stage);
-  try{for(const t of (c.tasks||[])){
-    const open=t.date&&t.action&&!t.done&&!closed;
-    if(open){const ev=gTaskEvent(c,t);
-      if(t.gev){await gApi('/calendars/'+encodeURIComponent(gcalId)+'/events/'+t.gev,{method:'PATCH',body:JSON.stringify(ev)});}
-      else{const r=await gApi('/calendars/'+encodeURIComponent(gcalId)+'/events',{method:'POST',body:JSON.stringify(ev)});t.gev=r.id;save();}}
-    else if(t.gev){try{await gApi('/calendars/'+encodeURIComponent(gcalId)+'/events/'+t.gev,{method:'DELETE'});}catch(e){}delete t.gev;save();}
-  }}catch(e){if(e&&e.code===401)gSilent();else console.error('gPushTask',e);}}
+  const open=c.date&&c.action&&!['ganado','perdido'].includes(c.stage);
+  try{
+    if(open){const ev=gTaskEvent(c);
+      if(c.gev){await gApi('/calendars/'+encodeURIComponent(gcalId)+'/events/'+c.gev,{method:'PATCH',body:JSON.stringify(ev)});}
+      else{const r=await gApi('/calendars/'+encodeURIComponent(gcalId)+'/events',{method:'POST',body:JSON.stringify(ev)});c.gev=r.id;save();}
+    }else if(c.gev){try{await gApi('/calendars/'+encodeURIComponent(gcalId)+'/events/'+c.gev,{method:'DELETE'});}catch(e){}delete c.gev;save();}
+  }catch(e){if(e&&e.code===401)gSilent();else console.error('gPushTask',e);}}
 async function gPushAll(){for(const c of data){await gPushTask(c);}}
 async function gPullAll(){try{
   const cl=await gApi('/users/me/calendarList');
@@ -938,98 +1079,19 @@ function setGcalUI(){const b=document.getElementById('gcalBtn');const s=document
   if(b)b.textContent=gConnected?'Desconectar Google Calendar':'Conectar Google Calendar';
   if(s)s.textContent=gConnected?'Conectado ✓ — tus tareas van al calendario "CRM Tesi" y tus eventos personales aparecen en la Agenda.':'No conectado. Conectá para sincronizar tareas y ver tus turnos personales.';}
 
-/* ============ IMPORTAR INTERACCIONES (Gmail + YouTube) ============ */
-function gGetImpToken(interactive){return new Promise(async(resolve,reject)=>{
-  if(gImpToken&&Date.now()<gImpExpiry-60000){resolve(gImpToken);return;}
-  const ok=await gWaitLib(8000);if(!ok){reject(new Error('lib'));return;}
-  try{const tc=google.accounts.oauth2.initTokenClient({client_id:GCLIENT_ID,scope:GIMPSCOPE,
-    callback:(r)=>{if(r&&r.access_token){gImpToken=r.access_token;gImpExpiry=Date.now()+((r.expires_in||3300)*1000);resolve(gImpToken);}else reject(new Error('no_token'));},
-    error_callback:(e)=>reject(e)});
-    tc.requestAccessToken({prompt:interactive?'consent':''});
-  }catch(e){reject(e);}});}
-async function gImpFetch(url){const res=await fetch(url,{headers:{'Authorization':'Bearer '+gImpToken}});
-  if(!res.ok){const e=new Error('impfetch '+res.status);e.code=res.status;throw e;}return res.json();}
-function impHeader(hs,n){const h=(hs||[]).find(x=>x.name&&x.name.toLowerCase()===n.toLowerCase());return h?h.value:'';}
-function impParseFrom(s){s=s||'';const m=s.match(/<([^>]+)>/);
-  let email=m?m[1].trim():'';let name=m?s.slice(0,m.index).trim().replace(/^"|"$/g,'').trim():'';
-  if(!email){const m2=s.match(/[\w.+-]+@[\w.-]+\.\w+/);email=m2?m2[0]:'';}
-  return {name,email};}
-function impMake(o){return {id:id(),name:o.name||'(sin nombre)',seg:'',src:o.src||'Otro',tipo:o.tipo||'',
-  stage:'interaccion',country:'',tasks:[],notes:o.notes||'',val:0,cost:0,
-  phone:'',email:o.email||'',ig:o.ig||'',address:'',partner:'',kids:'',bday:'',interests:'',
-  att:{budgets:[],imgs:[]},log:[{ts:nowStamp(),text:'Importado de '+(o.src||'canal')}]};}
-async function importGmail(){
-  const bizTo=(localStorage.getItem('imp_to')||'tesi@tesistudio.com').trim();const bizLc=bizTo.toLowerCase();
-  let q='in:inbox -from:me newer_than:14d -category:promotions -category:social -category:forums';
-  if(bizTo)q+=' (deliveredto:'+bizTo+' OR to:'+bizTo+')';
-  const list=await gImpFetch('https://gmail.googleapis.com/gmail/v1/users/me/messages?maxResults=25&q='+encodeURIComponent(q));
-  const msgs=list.messages||[];let added=0;
-  const known=new Set(data.map(c=>(c.email||'').trim().toLowerCase()).filter(Boolean));
-  for(const m of msgs){
-    if(gSeen.gmail.includes(m.id))continue;gSeen.gmail.push(m.id);
-    let msg;try{msg=await gImpFetch('https://gmail.googleapis.com/gmail/v1/users/me/messages/'+m.id+'?format=metadata&metadataHeaders=From&metadataHeaders=Subject&metadataHeaders=To&metadataHeaders=Cc&metadataHeaders=Delivered-To');}catch(e){continue;}
-    const hs=(msg.payload&&msg.payload.headers)||[];
-    if(bizLc){const rcpt=(impHeader(hs,'To')+' '+impHeader(hs,'Cc')+' '+impHeader(hs,'Delivered-To')).toLowerCase();if(!rcpt.includes(bizLc))continue;}
-    const pf=impParseFrom(impHeader(hs,'From'));if(!pf.email)continue;
-    const el=pf.email.toLowerCase();
-    if(/(no-?reply|noreply|do-?not-?reply|notifications?|notification|mailer-daemon|postmaster|bounce|newsletter|mailchimp|sendgrid|automated|googlemail.*noreply)/i.test(el))continue;
-    if(known.has(el))continue;
-    const subject=impHeader(hs,'Subject')||'(sin asunto)';
-    data.unshift(impMake({name:pf.name||pf.email,email:pf.email,src:'Email',tipo:'Email',notes:'Mail nuevo · Asunto: '+subject+(msg.snippet?' — '+String(msg.snippet).slice(0,120):'')}));
-    known.add(el);added++;}
-  if(gSeen.gmail.length>600)gSeen.gmail=gSeen.gmail.slice(-600);
-  return added;}
-async function importYouTube(){
-  const ch=await gImpFetch('https://www.googleapis.com/youtube/v3/channels?part=contentDetails,id&mine=true');
-  const channel=(ch.items||[])[0];if(!channel)return 0;
-  const myId=channel.id;
-  const uploads=channel.contentDetails&&channel.contentDetails.relatedPlaylists&&channel.contentDetails.relatedPlaylists.uploads;
-  if(!uploads)return 0;
-  const pl=await gImpFetch('https://www.googleapis.com/youtube/v3/playlistItems?part=contentDetails&maxResults=5&playlistId='+uploads);
-  const vids=(pl.items||[]).map(i=>i.contentDetails&&i.contentDetails.videoId).filter(Boolean);let added=0;
-  for(const vid of vids){
-    let r;try{r=await gImpFetch('https://www.googleapis.com/youtube/v3/commentThreads?part=snippet&maxResults=20&order=time&videoId='+vid);}catch(e){continue;}
-    for(const th of (r.items||[])){
-      if(gSeen.yt.includes(th.id))continue;gSeen.yt.push(th.id);
-      const sn=th.snippet&&th.snippet.topLevelComment&&th.snippet.topLevelComment.snippet;if(!sn)continue;
-      if(sn.authorChannelId&&sn.authorChannelId.value===myId)continue;
-      const text=String(sn.textOriginal||sn.textDisplay||'').slice(0,200);
-      data.unshift(impMake({name:sn.authorDisplayName||'(YouTube)',src:'YouTube',tipo:'Comentario',notes:'Comentó en YouTube: '+text,ig:sn.authorChannelUrl||''}));
-      added++;}}
-  if(gSeen.yt.length>1200)gSeen.yt=gSeen.yt.slice(-1200);
-  return added;}
-async function impDo(){let n=0;
-  try{n+=await importGmail();}catch(e){console.error('importGmail',e);}
-  try{n+=await importYouTube();}catch(e){console.error('importYouTube',e);}
-  if(n>0){save();render();toast('⚡ '+n+(n>1?' interacciones nuevas':' interacción nueva'));}
-  setImpUI();return n;}
-async function impAuto(){if(gImporting||gImportedThisSession||!importOn)return;gImporting=true;
-  try{await gGetImpToken(false);gImportedThisSession=true;await impDo();}
-  catch(e){importOn=false;localStorage.removeItem('imp_on');setImpUI();}
-  finally{gImporting=false;}}
-async function impConnect(){if(gImporting)return;gImporting=true;toast('Abriendo Google…');setImpUI();
-  try{await gGetImpToken(true);importOn=true;localStorage.setItem('imp_on','1');gImportedThisSession=true;scheduleCloud();
-    setImpUI();toast('Gmail + YouTube conectados ✓');await impDo();}
-  catch(e){toast('No se pudo conectar Gmail/YouTube');console.error('impConnect',e);}
-  finally{gImporting=false;setImpUI();}}
-function impDisconnect(){importOn=false;gImpToken=null;localStorage.removeItem('imp_on');scheduleCloud();setImpUI();toast('Importación desconectada');}
-function impToggle(){if(importOn)impDisconnect();else impConnect();}
-async function impNow(){if(gImporting){toast('Trayendo…');return;}gImporting=true;setImpUI();
-  try{await gGetImpToken(!importOn);importOn=true;localStorage.setItem('imp_on','1');const n=await impDo();if(!n)toast('No hay interacciones nuevas');}
-  catch(e){toast('No pude traer ahora');console.error('impNow',e);}finally{gImporting=false;setImpUI();}}
-function setImpUI(){const b=document.getElementById('impBtn');const nb=document.getElementById('impNowBtn');const s=document.getElementById('impStatus');
-  if(b)b.textContent=importOn?'Desconectar Gmail + YouTube':'Conectar Gmail + YouTube';
-  if(nb)nb.classList.toggle('hide',!importOn);
-  if(s)s.textContent=gImporting?'Trayendo interacciones…':(importOn?'Conectado ✓ — al abrir la app entran solas las interacciones nuevas (mails de remitentes nuevos y comentarios de tus videos recientes) en la columna "Nueva interacción".':'No conectado. Conectá para que entren solas las interacciones de Gmail y YouTube.');}
-
 /* ============ SETTINGS ============ */
 function openSettings(){document.getElementById('s_pin').value='';document.getElementById('s_artist').value=artist();
-  document.getElementById('s_impto').value=localStorage.getItem('imp_to')||'tesi@tesistudio.com';
-  setGcalUI();setImpUI();document.getElementById('sOverlay').classList.add('show');}
+  document.getElementById('s_rate_ars').value=hourlyRates.ARS||'';
+  document.getElementById('s_rate_usd').value=hourlyRates.USD||'';
+  document.getElementById('s_rate_eur').value=hourlyRates.EUR||'';
+  setGcalUI();document.getElementById('sOverlay').classList.add('show');}
 function closeSettings(){document.getElementById('sOverlay').classList.remove('show');}
 async function saveSettings(){const p=document.getElementById('s_pin').value.trim();const ar=document.getElementById('s_artist').value.trim();
   if(ar)localStorage.setItem(ARTKEY,ar);
-  const it=document.getElementById('s_impto').value.trim();localStorage.setItem('imp_to',it);scheduleCloud();
+  hourlyRates={ARS:+document.getElementById('s_rate_ars').value||0,
+    USD:+document.getElementById('s_rate_usd').value||0,
+    EUR:+document.getElementById('s_rate_eur').value||0};
+  scheduleCloud();
   if(p){if(!/^\d{4,8}$/.test(p)){toast('El PIN debe tener 4-8 dígitos');return;}localStorage.setItem(PINKEY,p);
     if(CLOUD&&cloudUser&&sb){const{error}=await sb.auth.updateUser({password:PINSALT+p});
       if(error){toast('No pude guardar el PIN: '+error.message);return;}
@@ -1040,24 +1102,21 @@ function wipe(){if(confirm('Esto borra TODOS los contactos de este dispositivo. 
 
 /* ============ IMPORT / EXPORT ============ */
 function exportXlsx(){const sn=i=>STAGES.find(s=>s.id===i)?.name||i;
-  const rows=data.map(c=>{const nt=(c.tasks||[]).filter(x=>!x.done&&x.date).sort((a,b)=>a.date.localeCompare(b.date))[0]||(c.tasks||[]).find(x=>!x.done&&x.action)||null;return{Nombre:c.name,Segmento:c.seg,Origen:c.src,Pais:c.country||'',Etapa:sn(c.stage),
-    'Proxima accion':nt&&nt.action||'','Fecha accion':nt&&nt.date||'','Valor USD':c.val||0,'Costo USD':c.cost||0,
+  const rows=data.map(c=>({Nombre:c.name,Segmento:c.seg,Origen:c.src,Pais:c.country||'',Etapa:sn(c.stage),
+    'Proxima accion':c.action||'','Fecha accion':c.date||'','Valor USD':c.val||0,'Costo USD':c.cost||0,
     Telefono:c.phone||'',Email:c.email||'',Instagram:c.ig||'',Direccion:c.address||'',
     Pareja:c.partner||'',Hijos:c.kids||'',Cumpleanos:c.bday||'',Intereses:c.interests||'',
-    Presupuestos:(c.att&&c.att.budgets?c.att.budgets.length:0),Nota:c.notes||''}});
+    Presupuestos:(c.att&&c.att.budgets?c.att.budgets.length:0),Nota:c.notes||''}));
   const ws=XLSX.utils.json_to_sheet(rows);const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'Contactos');
   XLSX.writeFile(wb,`CRM_backup_${today()}.xlsx`);toast('Excel descargado · guardalo en Drive');}
 function importFile(ev){const file=ev.target.files[0];if(!file)return;const reader=new FileReader();
   reader.onload=e=>{try{const wb=XLSX.read(e.target.result,{type:'binary'});const rows=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);let n=0;
     rows.forEach(r=>{const name=r.Nombre||r.nombre||r.Name||r.name||r['Full Name']||r['First Name']||'';if(!name)return;
       const stg=STAGES.find(s=>s.name.toLowerCase()===String(r.Etapa||'').toLowerCase());
-      const csvAction=String(r['Proxima accion']||r['Próxima acción']||'');
-        const csvDate=fixDate(r['Fecha accion']||r['Fecha']||'');
-        const csvTasks=(csvAction||csvDate)?[{id:id(),action:csvAction,date:csvDate,time:'',done:false}]:[];
-        data.unshift({id:id(),name:String(name),seg:normSeg(r.Segmento||r.segmento||r.Tipo||''),
+      data.unshift({id:id(),name:String(name),seg:normSeg(r.Segmento||r.segmento||r.Tipo||''),
         src:normSrc(r.Origen||r.origen||r.Source||r.Fuente||''),stage:stg?stg.id:'nuevo',
-        country:String(r.Pais||r['País']||r.Country||''),tasks:csvTasks,
-        val:+(r['Valor USD']||r.Valor||r.valor||r.Value||0)||0,
+        country:String(r.Pais||r['País']||r.Country||''),action:String(r['Proxima accion']||r['Próxima acción']||''),
+        date:fixDate(r['Fecha accion']||r['Fecha']||''),val:+(r['Valor USD']||r.Valor||r.valor||r.Value||0)||0,
         cost:+(r['Costo USD']||r.Costo||r.costo||0)||0,
         phone:String(r.Telefono||r['Teléfono']||r.telefono||r.Phone||r.WhatsApp||r.Celular||''),
         email:String(r.Email||r.email||r['E-mail']||r.Correo||''),ig:String(r.Instagram||r.instagram||r.IG||''),
@@ -1082,6 +1141,276 @@ function fixDate(v){if(!v)return'';if(typeof v==='number'){const d=XLSX.SSF.pars
   if(d)return `${d.y}-${String(d.m).padStart(2,'0')}-${String(d.d).padStart(2,'0')}`;}
   const s=String(v).slice(0,10);return /\d{4}-\d{2}-\d{2}/.test(s)?s:'';}
 
+/* ============ PRODUCT CATALOG ============ */
+function openProdCatalog(){renderProdList();document.getElementById('prodOverlay').classList.add('show');}
+function closeProdCatalog(){document.getElementById('prodOverlay').classList.remove('show');}
+function renderProdList(){
+  const el=document.getElementById('prodList');
+  if(!products.length){el.innerHTML='<div style="color:var(--muted);font-size:12.5px">Sin productos. Creá uno abajo.</div>';return;}
+  el.innerHTML=products.map(p=>`<div class="prod-item">
+    <div class="pi-info"><div class="pi-name">${esc(p.name)}</div>
+    <div class="pi-sub">${esc(p.med||'')}${p.prices&&p.prices.length?' · '+p.prices[p.prices.length-1].cur+' '+p.prices[p.prices.length-1].val:''}</div></div>
+    <button class="mini" onclick="addProdToBudget('${p.id}')">＋ Al presupuesto</button>
+    <button class="mini task-del" onclick="deleteProd('${p.id}')">✕</button>
+  </div>`).join('');}
+function saveNewProduct(){
+  const name=document.getElementById('np_name').value.trim();if(!name){toast('Poné un nombre');return;}
+  const p={id:id(),name,desc:document.getElementById('np_desc').value.trim(),
+    med:document.getElementById('np_med').value.trim(),
+    prices:[{date:today(),cur:document.getElementById('np_cur').value,val:+document.getElementById('np_price').value||0}]};
+  products.push(p);scheduleCloud();
+  ['np_name','np_desc','np_med','np_price'].forEach(i=>document.getElementById(i).value='');
+  renderProdList();toast('Producto guardado');}
+function deleteProd(pid){if(!confirm('¿Eliminar este producto?'))return;products=products.filter(p=>p.id!==pid);scheduleCloud();renderProdList();}
+function addProdToBudget(pid){
+  const p=products.find(x=>x.id===pid);if(!p)return;
+  addBItem(p);closeProdCatalog();}
+
+/* ============ WORK ORDERS ============ */
+function saveWO(){scheduleCloud();}
+function pushWOLog(wo,text){if(!wo.log)wo.log=[];wo.log.push({ts:nowStamp(),text});}
+function newWOAtt(){return {fichaTecnica:[],imgs:[]};}
+
+function openWorkOrderFromBudget(key){
+  const c=editingId?data.find(x=>x.id===editingId):null;
+  const b=c&&(c.att&&c.att.budgets||[]).find(x=>x.key===key);
+  if(!b||!b.meta){toast('Guardá el presupuesto generado primero');return;}
+  const meta=b.meta;
+  document.getElementById('cOverlay').classList.remove('show');
+  openWorkOrder(null,{contactId:c?c.id:null,contactName:c?c.name:'',budgetNum:meta.num,
+    salePrice:meta.total,saleCur:meta.cur,plazo:meta.plazo||0,title:(c?c.name:'')});}
+
+function openWorkOrder(woid,prefill){
+  editingWOId=woid||null;
+  const wo=woid?workOrders.find(x=>x.id===woid):{};
+  document.getElementById('woTitle').textContent=woid?'Editar orden':'Nueva orden de trabajo';
+  document.getElementById('woDelBtn').classList.toggle('hide',!woid);
+  document.getElementById('wo_title').value=(wo&&wo.title||prefill&&prefill.title||'');
+  document.getElementById('wo_client').value=(wo&&wo.contactName||prefill&&prefill.contactName||'');
+  document.getElementById('wo_budgetnum').value=(wo&&wo.budgetNum||prefill&&prefill.budgetNum||'');
+  document.getElementById('wo_stage').value=(wo&&wo.stage||'cola');
+  document.getElementById('wo_price').value=(wo&&wo.salePrice||prefill&&prefill.salePrice||'');
+  document.getElementById('wo_cur').value=(wo&&wo.saleCur||prefill&&prefill.saleCur||'USD');
+  document.getElementById('wo_plazo').value=(wo&&wo.plazo||prefill&&prefill.plazo||'');
+  document.getElementById('wo_confirmed').value=(wo&&wo.confirmedDate||'');
+  document.getElementById('wo_lb_h').value=(wo&&wo.laborBordado&&wo.laborBordado.hours||'');
+  document.getElementById('wo_lb_r').value=(wo&&wo.laborBordado&&wo.laborBordado.rate||hourlyRates[wo&&wo.saleCur||'USD']||'');
+  document.getElementById('wo_lh_h').value=(wo&&wo.laborHojaOro&&wo.laborHojaOro.hours||'');
+  document.getElementById('wo_lh_r').value=(wo&&wo.laborHojaOro&&wo.laborHojaOro.rate||hourlyRates[wo&&wo.saleCur||'USD']||'');
+  document.getElementById('wo_gf').value=(wo&&wo.gastosFijos||'');
+  document.getElementById('wo_notes').value=(wo&&wo.notes||'');
+  const ptasks=wo&&wo.productionTasks||(woid?[]:WO_PTASK_DEFAULTS.map(n=>({id:id(),name:n,startDate:'',endDate:'',done:false})));
+  renderPTasks(ptasks);
+  const mats=wo&&wo.materials||(woid?[]:WO_MAT_DEFAULTS.map(m=>({id:id(),name:m.name,medidas:'',qty:1,unit:'',price:0})));
+  renderMatRows(mats);
+  draftWOAtt=wo&&wo.att?JSON.parse(JSON.stringify(wo.att)):newWOAtt();
+  renderWOAtt();renderWOLog();updateShipDate();calcWOMargin();
+  document.getElementById('woOverlay').classList.add('show');}
+
+function closeWorkOrder(){document.getElementById('woOverlay').classList.remove('show');}
+function woBodyDirty(){}
+
+function renderPTasks(tasks){
+  const el=document.getElementById('wo_ptasks');el.innerHTML='';
+  (tasks||[]).forEach(t=>{const row=document.createElement('div');row.className='ptask';row.dataset.ptid=t.id;
+    row.innerHTML=`<input type="checkbox" ${t.done?'checked':''} onchange="ptaskCheck(this)">
+      <input class="pt-name" value="${esc(t.name)}" placeholder="Tarea" style="background:transparent;border:none;color:var(--txt);flex:1">
+      <input class="pt-start" type="date" value="${t.startDate||''}" title="Inicio">
+      <input class="pt-end" type="date" value="${t.endDate||''}" title="Fin">
+      <button class="ptask-del" onclick="this.closest('.ptask').remove()">✕</button>`;
+    if(t.done)row.style.opacity='0.5';
+    el.appendChild(row);});}
+function addPTask(){
+  const el=document.getElementById('wo_ptasks');
+  const row=document.createElement('div');row.className='ptask';row.dataset.ptid=id();
+  row.innerHTML=`<input type="checkbox" onchange="ptaskCheck(this)">
+    <input class="pt-name" placeholder="Nueva tarea" style="background:transparent;border:none;color:var(--txt);flex:1">
+    <input class="pt-start" type="date" title="Inicio">
+    <input class="pt-end" type="date" title="Fin">
+    <button class="ptask-del" onclick="this.closest('.ptask').remove()">✕</button>`;
+  el.appendChild(row);}
+function ptaskCheck(cb){const row=cb.closest('.ptask');row.style.opacity=cb.checked?'0.5':'1';
+  if(cb.checked&&!row.querySelector('.pt-end').value)row.querySelector('.pt-end').value=today();}
+function collectPTasks(){
+  return [...document.getElementById('wo_ptasks').querySelectorAll('.ptask')].map(r=>({
+    id:r.dataset.ptid||id(),name:r.querySelector('.pt-name').value.trim(),
+    startDate:r.querySelector('.pt-start').value,endDate:r.querySelector('.pt-end').value,
+    done:r.querySelector('input[type=checkbox]').checked}));}
+
+function renderMatRows(mats){
+  const tbody=document.getElementById('wo_matbody');tbody.innerHTML='';
+  (mats||[]).forEach(m=>tbody.appendChild(matRow(m)));}
+function matRow(m){const tr=document.createElement('tr');tr.dataset.mid=m.id||id();
+  tr.innerHTML=`<td><input class="m-name" value="${esc(m.name||'')}" placeholder="Material" oninput="calcWOMargin()"></td>
+    <td><input class="m-med" value="${esc(m.medidas||'')}" placeholder="Ej: 30×30cm"></td>
+    <td><input class="m-qty" type="number" min="0" value="${m.qty||1}" style="width:60px" oninput="calcWOMargin()"></td>
+    <td><input class="m-price" type="number" min="0" value="${m.price||''}" placeholder="0" style="width:80px" oninput="calcWOMargin()"></td>
+    <td class="m-sub" style="color:var(--muted);font-size:12px">${((m.qty||1)*(m.price||0)).toLocaleString('es-AR')}</td>
+    <td><button class="mat-del" onclick="this.closest('tr').remove();calcWOMargin()">✕</button></td>`;
+  return tr;}
+function addMatRow(){document.getElementById('wo_matbody').appendChild(matRow({id:id()}));}
+function collectMats(){
+  return [...document.getElementById('wo_matbody').querySelectorAll('tr')].map(r=>({
+    id:r.dataset.mid,name:r.querySelector('.m-name').value.trim(),
+    medidas:r.querySelector('.m-med').value.trim(),
+    qty:+r.querySelector('.m-qty').value||1,price:+r.querySelector('.m-price').value||0}));}
+
+function calcWOMargin(){
+  document.querySelectorAll('#wo_matbody tr').forEach(r=>{
+    const q=+r.querySelector('.m-qty')?.value||1;const p=+r.querySelector('.m-price')?.value||0;
+    const sub=r.querySelector('.m-sub');if(sub)sub.textContent=(q*p).toLocaleString('es-AR');});
+  const price=+document.getElementById('wo_price').value||0;
+  const cur=document.getElementById('wo_cur').value;
+  const lb=(+document.getElementById('wo_lb_h').value||0)*(+document.getElementById('wo_lb_r').value||0);
+  const lh=(+document.getElementById('wo_lh_h').value||0)*(+document.getElementById('wo_lh_r').value||0);
+  const mats=[...document.getElementById('wo_matbody').querySelectorAll('tr')].reduce((s,r)=>{
+    return s+(+r.querySelector('.m-qty')?.value||1)*(+r.querySelector('.m-price')?.value||0);},0);
+  const gf=+document.getElementById('wo_gf').value||0;
+  const totalCost=lb+lh+mats+gf;const margin=price-totalCost;const pct=price?Math.round(margin/price*100):0;
+  const el=document.getElementById('wo_finsummary');
+  el.innerHTML=`<div class="fin-row"><span>Precio de venta</span><span>${cur} ${price.toLocaleString('es-AR')}</span></div>
+    <div class="fin-row"><span>Mano de obra bordado</span><span>${cur} ${lb.toLocaleString('es-AR')}</span></div>
+    <div class="fin-row"><span>Mano de obra hoja de oro</span><span>${cur} ${lh.toLocaleString('es-AR')}</span></div>
+    <div class="fin-row"><span>Materiales</span><span>${cur} ${mats.toLocaleString('es-AR')}</span></div>
+    <div class="fin-row"><span>Gastos fijos</span><span>${cur} ${gf.toLocaleString('es-AR')}</span></div>
+    <div class="fin-row total"><span>Margen</span><span style="color:${margin>=0?'var(--ok)':'var(--bad)'}">${cur} ${margin.toLocaleString('es-AR')} (${pct}%)</span></div>`;}
+
+function updateShipDate(){
+  const confirmed=document.getElementById('wo_confirmed').value;
+  const plazo=+document.getElementById('wo_plazo').value;
+  const row=document.getElementById('wo_deadlineRow');
+  const info=document.getElementById('wo_deadlineInfo');
+  if(!confirmed||!plazo){row.style.display='none';return;}
+  const shipDate=addDays(confirmed,plazo);
+  const diff=Math.ceil((new Date(shipDate+'T00:00:00')-new Date(today()+'T00:00:00'))/(1000*86400));
+  const color=diff<0?'var(--bad)':diff<=3?'var(--warn)':'var(--ok)';
+  info.innerHTML=`📦 Fecha estimada de despacho: <b>${fmtFull(shipDate)}</b><br>
+    <span style="color:${color};font-weight:700">${diff<0?'Vencida hace '+(-diff)+' días':diff===0?'¡Despachar HOY!':'Quedan '+diff+' días'}</span>`;
+  row.style.display='block';}
+
+function syncShipEvent(wo){
+  if(!wo.confirmedDate||!wo.plazo)return;
+  const shipDate=addDays(wo.confirmedDate,+wo.plazo);
+  const alertDate=addDays(shipDate,-(+wo.alertDays||3));
+  if(wo.agendaEventId){events=events.filter(e=>e.id!==wo.agendaEventId);wo.agendaEventId='';}
+  const ev={id:id(),title:'Despachar · '+(wo.contactName||wo.title||'obra'),date:alertDate,time:''};
+  events.push(ev);wo.agendaEventId=ev.id;saveEvents();}
+
+async function renderWOAtt(){
+  const fl=document.getElementById('wo_fichaList');if(!fl)return;fl.innerHTML='';
+  for(const f of draftWOAtt.fichaTecnica||[]){const url=await attUrl(f.key,f.name)||'#';
+    const div=document.createElement('div');div.className='filechip';
+    div.innerHTML=`📄 <a href="${url}" target="_blank">${esc(f.name)}</a><span class="rm" onclick="rmWOFicha('${f.key}')">✕</span>`;
+    fl.appendChild(div);}
+  const th=document.getElementById('wo_thumbs');if(!th)return;th.innerHTML='';
+  for(const im of draftWOAtt.imgs||[]){const url=await attUrl(im.key)||'';
+    const d=document.createElement('div');d.className='thumb';
+    d.innerHTML=(url?`<img src="${url}">`:esc(im.name||''))+`<span class="rm" onclick="rmWOImg('${im.key}')">✕</span>`;
+    th.appendChild(d);}}
+async function addWOFicha(ev){const files=[...ev.target.files];
+  for(const f of files){const k=fileKey();await attUpload(k,f,f.type);draftWOAtt.fichaTecnica.push({key:k,name:f.name});}
+  ev.target.value='';renderWOAtt();}
+async function addWOImgs(ev){const files=[...ev.target.files];
+  for(const f of files){const blob=await shrink(f);const k=fileKey();await attUpload(k,blob,'image/jpeg');draftWOAtt.imgs.push({key:k,name:f.name});}
+  ev.target.value='';renderWOAtt();}
+function rmWOFicha(k){attDel(k);draftWOAtt.fichaTecnica=draftWOAtt.fichaTecnica.filter(x=>x.key!==k);renderWOAtt();}
+function rmWOImg(k){attDel(k);draftWOAtt.imgs=draftWOAtt.imgs.filter(x=>x.key!==k);renderWOAtt();}
+
+function renderWOLog(){
+  const box=document.getElementById('wo_loglist');if(!box)return;
+  const wo=editingWOId?workOrders.find(x=>x.id===editingWOId):null;
+  const log=(wo&&wo.log)||[];
+  if(!log.length){box.innerHTML='<div style="color:var(--muted);font-size:12px">Sin actividad todavía.</div>';return;}
+  box.innerHTML=log.slice().reverse().map(e=>`<div class="logitem"><span class="logdot"></span><div><div class="logtxt">${esc(e.text)}</div><div class="logts">${fmtStamp(e.ts)}</div></div></div>`).join('');}
+
+function saveWorkOrder(){
+  const title=document.getElementById('wo_title').value.trim();
+  if(!title){toast('Poné un título');return;}
+  const confirmed=document.getElementById('wo_confirmed').value;
+  const obj={title,
+    contactId:editingWOId?(workOrders.find(x=>x.id===editingWOId)||{}).contactId:'',
+    contactName:document.getElementById('wo_client').value,
+    budgetNum:document.getElementById('wo_budgetnum').value,
+    stage:document.getElementById('wo_stage').value,
+    salePrice:+document.getElementById('wo_price').value||0,
+    saleCur:document.getElementById('wo_cur').value,
+    plazo:+document.getElementById('wo_plazo').value||0,
+    confirmedDate:confirmed,alertDays:3,
+    laborBordado:{hours:+document.getElementById('wo_lb_h').value||0,rate:+document.getElementById('wo_lb_r').value||0},
+    laborHojaOro:{hours:+document.getElementById('wo_lh_h').value||0,rate:+document.getElementById('wo_lh_r').value||0},
+    productionTasks:collectPTasks(),materials:collectMats(),
+    gastosFijos:+document.getElementById('wo_gf').value||0,
+    notes:document.getElementById('wo_notes').value.trim(),
+    att:draftWOAtt};
+  if(editingWOId){const idx=workOrders.findIndex(x=>x.id===editingWOId);
+    const prev=workOrders[idx];obj.id=editingWOId;obj.log=prev.log||[];obj.agendaEventId=prev.agendaEventId||'';
+    if(confirmed!==prev.confirmedDate||obj.plazo!==prev.plazo)syncShipEvent(obj);
+    workOrders[idx]=obj;}
+  else{obj.id=id();obj.log=[];obj.agendaEventId='';
+    pushWOLog(obj,'Orden creada');if(confirmed)syncShipEvent(obj);workOrders.push(obj);}
+  saveWO();closeWorkOrder();if(view==='workorders')renderWorkOrders();toast('Orden guardada');}
+
+function deleteWorkOrder(){if(!editingWOId)return;
+  if(!confirm('¿Eliminar esta orden de trabajo?'))return;
+  const wo=workOrders.find(x=>x.id===editingWOId);
+  if(wo){if(wo.agendaEventId)events=events.filter(e=>e.id!==wo.agendaEventId);
+    (wo.att&&wo.att.fichaTecnica||[]).forEach(f=>attDel(f.key));
+    (wo.att&&wo.att.imgs||[]).forEach(i=>attDel(i.key));}
+  workOrders=workOrders.filter(x=>x.id!==editingWOId);saveWO();saveEvents();
+  closeWorkOrder();if(view==='workorders')renderWorkOrders();toast('Orden eliminada');}
+
+function woMargin(wo){
+  if(!wo.salePrice)return null;
+  const lb=(+(wo.laborBordado&&wo.laborBordado.hours)||0)*(+(wo.laborBordado&&wo.laborBordado.rate)||0);
+  const lh=(+(wo.laborHojaOro&&wo.laborHojaOro.hours)||0)*(+(wo.laborHojaOro&&wo.laborHojaOro.rate)||0);
+  const mats=(wo.materials||[]).reduce((s,m)=>s+(+(m.qty||1))*(+(m.price||0)),0);
+  return wo.salePrice-(lb+lh+mats+(+wo.gastosFijos||0));}
+
+function woCardHTML(wo){
+  const done=(wo.productionTasks||[]).filter(t=>t.done).length;
+  const total=(wo.productionTasks||[]).length;
+  const pct=total?Math.round(done/total*100):0;
+  let countdown='';
+  if(wo.confirmedDate&&wo.plazo){
+    const shipDate=addDays(wo.confirmedDate,+wo.plazo);
+    const diff=Math.ceil((new Date(shipDate+'T00:00:00')-new Date(today()+'T00:00:00'))/(1000*86400));
+    const cls=diff<0?'over':diff<=3?'warn':'';
+    countdown=diff<0?`<span class="countdown over">Vencida hace ${-diff}d</span>`:
+      diff===0?`<span class="countdown warn">Despachar HOY</span>`:
+      `<span class="countdown ${cls}">⏱ ${diff}d para despachar</span>`;}
+  const margin=woMargin(wo);
+  return `<div class="wo-card" draggable="true" ondragstart="event.dataTransfer.setData('woid','${wo.id}')" onclick="openWorkOrder('${wo.id}')">
+    <div class="wo-name">${esc(wo.title||'(sin título)')}</div>
+    <div class="wo-sub">${esc(wo.contactName||'—')}${wo.budgetNum?' · N°'+esc(wo.budgetNum):''}</div>
+    ${total?`<div class="wo-progress"><div class="wo-progress-bar" style="width:${pct}%"></div></div><div class="wo-cnt">${done}/${total} tareas</div>`:''}
+    ${countdown}
+    <div class="wo-row"><span style="font-weight:700">${wo.saleCur} ${(wo.salePrice||0).toLocaleString('es-AR')}</span>
+    ${margin!==null?`<span style="color:${margin>=0?'var(--ok)':'var(--bad)'};font-weight:700">${margin>=0?'+':''}${margin.toFixed(0)} (${wo.salePrice?Math.round(margin/wo.salePrice*100):0}%)</span>`:''}
+    </div></div>`;}
+
+function woDropStage(stageId,event){
+  const woid=event.dataTransfer.getData('woid');
+  const wo=workOrders.find(x=>x.id===woid);
+  if(wo&&wo.stage!==stageId){wo.stage=stageId;pushWOLog(wo,'Etapa: '+WO_STAGES.find(s=>s.id===stageId)?.name);saveWO();}
+  renderWorkOrders();}
+
+function renderWorkOrders(){
+  const el=document.getElementById('workorders');
+  const byStage=s=>workOrders.filter(wo=>wo.stage===s);
+  let html=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+    <h2 style="margin:0;font-size:18px">Órdenes de trabajo</h2>
+    <button class="icon-btn btn-primary" onclick="openWorkOrder()">＋ Nueva orden</button></div>
+  <div class="wo-board">`;
+  WO_STAGES.forEach(s=>{
+    const items=byStage(s.id);
+    html+=`<div class="wo-col" ondragover="event.preventDefault();this.classList.add('drop')" ondragleave="this.classList.remove('drop')" ondrop="woDropStage('${s.id}',event);this.classList.remove('drop')">
+      <h3><span class="tdot" style="background:${s.color};display:inline-block;width:8px;height:8px;border-radius:50%"></span> ${s.name}<span class="pill">${items.length}</span></h3>`;
+    items.forEach(wo=>html+=woCardHTML(wo));
+    if(!items.length)html+=`<div class="empty-col" style="font-size:12px;color:var(--muted)">Sin órdenes</div>`;
+    html+=`</div>`;});
+  html+=`</div>`;
+  el.innerHTML=html;}
+
 /* ============ UTIL ============ */
 function today(){return new Date().toISOString().slice(0,10);}
 function addDays(d,n){const x=new Date(d+'T00:00:00');x.setDate(x.getDate()+n);return x.toISOString().slice(0,10);}
@@ -1096,7 +1425,7 @@ function fmtStamp(iso){try{const n=new Date(iso);const p=x=>String(x).padStart(2
 let toastT;function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');
   clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('show'),2300);}
 document.getElementById('cOverlay').addEventListener('click',e=>{if(e.target.id==='cOverlay')attemptClose();});
-['sOverlay','bOverlay','eOverlay'].forEach(id=>document.getElementById(id).addEventListener('click',e=>{if(e.target.id===id)document.getElementById(id).classList.remove('show');}));
+['sOverlay','bOverlay','eOverlay','prodOverlay','woOverlay'].forEach(id=>document.getElementById(id).addEventListener('click',e=>{if(e.target.id===id)document.getElementById(id).classList.remove('show');}));
 document.getElementById('b_cur').addEventListener('change',recalcBudget);
 init();
 </script>
