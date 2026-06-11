@@ -329,6 +329,12 @@
         <button class="icon-btn btn-primary" id="gcalBtn" style="width:100%" onclick="gToggle()">Conectar Google Calendar</button>
         <div id="gcalStatus" style="color:var(--muted);font-size:12px;margin-top:8px"></div>
       </div>
+      <div class="sect">Importar interacciones (Gmail + YouTube)</div>
+      <div class="full">
+        <button class="icon-btn btn-primary" id="impBtn" style="width:100%" onclick="impToggle()">Conectar Gmail + YouTube</button>
+        <button class="icon-btn hide" id="impNowBtn" style="width:100%;margin-top:8px" onclick="impNow()">Traer ahora</button>
+        <div id="impStatus" style="color:var(--muted);font-size:12px;margin-top:8px"></div>
+      </div>
       <div class="full" style="color:var(--muted);font-size:12.5px;line-height:1.6">
         <b style="color:var(--txt)">Backup en Google Drive:</b> usá <b>Exportar Excel</b> y guardá el archivo en tu Drive cuando quieras un respaldo extra.
       </div>
@@ -401,6 +407,10 @@ const PINSALT='tesi_';
 const GCLIENT_ID='426001960634-u76d6t9ve5iqaaql93jh573j0d3d2p3k.apps.googleusercontent.com';
 let sb=null,cloudUser=null,saveTimer=null;
 let gToken=null,gTokenClient=null,gExpiry=0,gPendingConsent=false,gEvents=[];
+const GIMPSCOPE='https://www.googleapis.com/auth/gmail.readonly https://www.googleapis.com/auth/youtube.readonly';
+let gImpToken=null,gImpExpiry=0,gImporting=false,gImportedThisSession=false;
+let importOn=localStorage.getItem('imp_on')==='1';
+let gSeen={gmail:[],yt:[]};
 let gcalId=localStorage.getItem('gcal_id')||null;
 let gConnected=localStorage.getItem('gcal_connected')==='1';
 function migrateContact(c){if(!c.att)c.att={budgets:[],imgs:[]};
@@ -418,7 +428,7 @@ function artist(){return localStorage.getItem(ARTKEY)||BRAND.name;}
 function nextSeq(){let n=(+localStorage.getItem(SEQKEY)||0)+1;localStorage.setItem(SEQKEY,n);scheduleCloud();return n;}
 function scheduleCloud(){if(!CLOUD||!cloudUser)return;setSync('wait');clearTimeout(saveTimer);saveTimer=setTimeout(cloudSave,800);}
 async function cloudSave(){if(!CLOUD||!cloudUser||!sb)return;
-  const state={contacts:data,events,artist:artist(),seq:+localStorage.getItem(SEQKEY)||0};
+  const state={contacts:data,events,artist:artist(),seq:+localStorage.getItem(SEQKEY)||0,importOn,seen:gSeen};
   try{const{error}=await sb.from('crm_state').upsert({user_id:cloudUser.id,state,updated_at:new Date().toISOString()});
     if(error)throw error;setSync('ok');}catch(e){setSync('err');console.error('cloudSave',e);}}
 async function cloudLoad(){if(!sb||!cloudUser)return;
@@ -426,6 +436,8 @@ async function cloudLoad(){if(!sb||!cloudUser)return;
     if(error)throw error;
     if(row&&row.state){const s=row.state;data=Array.isArray(s.contacts)?s.contacts:[];events=Array.isArray(s.events)?s.events:[];
       if(s.artist)localStorage.setItem(ARTKEY,s.artist);if(s.seq!=null)localStorage.setItem(SEQKEY,s.seq);
+      gSeen={gmail:(s.seen&&Array.isArray(s.seen.gmail))?s.seen.gmail:[],yt:(s.seen&&Array.isArray(s.seen.yt))?s.seen.yt:[]};
+      if(s.importOn){importOn=true;localStorage.setItem('imp_on','1');}
       data.forEach(migrateContact);setSync('ok');}
     else{data=seed();events=seedEvents();data.forEach(migrateContact);await cloudSave();}
   }catch(e){console.error('cloudLoad',e);toast('No pude leer la nube; reintentá');data=data&&data.length?data:[];events=events||[];}}
@@ -460,7 +472,7 @@ async function cloudMagic(){const email=(document.getElementById('cemail').value
   document.getElementById('magicSent').classList.remove('hide');toast('Enlace enviado ✉️');}
 async function afterAuth(){try{if(cloudUser&&cloudUser.email)localStorage.setItem('crm_last_email',cloudUser.email);}catch(e){}
   document.getElementById('gate').classList.add('hide');document.getElementById('app').classList.remove('hide');
-  await cloudLoad();buildSelects();render();setGcalUI();gTryAuto();}
+  await cloudLoad();buildSelects();render();setGcalUI();gTryAuto();impAuto();}
 async function cloudLogout(){try{await sb.auth.signOut();}catch(e){}location.reload();}
 function init(){
   if(CLOUD){try{sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON);}catch(e){console.error(e);}
@@ -888,8 +900,89 @@ function setGcalUI(){const b=document.getElementById('gcalBtn');const s=document
   if(b)b.textContent=gConnected?'Desconectar Google Calendar':'Conectar Google Calendar';
   if(s)s.textContent=gConnected?'Conectado ✓ — tus tareas van al calendario "CRM Tesi" y tus eventos personales aparecen en la Agenda.':'No conectado. Conectá para sincronizar tareas y ver tus turnos personales.';}
 
+/* ============ IMPORTAR INTERACCIONES (Gmail + YouTube) ============ */
+function gGetImpToken(interactive){return new Promise(async(resolve,reject)=>{
+  if(gImpToken&&Date.now()<gImpExpiry-60000){resolve(gImpToken);return;}
+  const ok=await gWaitLib(8000);if(!ok){reject(new Error('lib'));return;}
+  try{const tc=google.accounts.oauth2.initTokenClient({client_id:GCLIENT_ID,scope:GIMPSCOPE,
+    callback:(r)=>{if(r&&r.access_token){gImpToken=r.access_token;gImpExpiry=Date.now()+((r.expires_in||3300)*1000);resolve(gImpToken);}else reject(new Error('no_token'));},
+    error_callback:(e)=>reject(e)});
+    tc.requestAccessToken({prompt:interactive?'consent':''});
+  }catch(e){reject(e);}});}
+async function gImpFetch(url){const res=await fetch(url,{headers:{'Authorization':'Bearer '+gImpToken}});
+  if(!res.ok){const e=new Error('impfetch '+res.status);e.code=res.status;throw e;}return res.json();}
+function impHeader(hs,n){const h=(hs||[]).find(x=>x.name&&x.name.toLowerCase()===n.toLowerCase());return h?h.value:'';}
+function impParseFrom(s){s=s||'';const m=s.match(/<([^>]+)>/);
+  let email=m?m[1].trim():'';let name=m?s.slice(0,m.index).trim().replace(/^"|"$/g,'').trim():'';
+  if(!email){const m2=s.match(/[\w.+-]+@[\w.-]+\.\w+/);email=m2?m2[0]:'';}
+  return {name,email};}
+function impMake(o){return {id:id(),name:o.name||'(sin nombre)',seg:'',src:o.src||'Otro',tipo:o.tipo||'',
+  stage:'interaccion',country:'',action:'',date:'',time:'',notes:o.notes||'',val:0,cost:0,
+  phone:'',email:o.email||'',ig:o.ig||'',address:'',partner:'',kids:'',bday:'',interests:'',
+  att:{budgets:[],imgs:[]},log:[{ts:nowStamp(),text:'Importado de '+(o.src||'canal')}]};}
+async function importGmail(){
+  const q='in:inbox -from:me newer_than:14d -category:promotions -category:social -category:forums';
+  const list=await gImpFetch('https://gmail.googleapis.com/gmail/v1/users/me/messages?maxResults=25&q='+encodeURIComponent(q));
+  const msgs=list.messages||[];let added=0;
+  const known=new Set(data.map(c=>(c.email||'').trim().toLowerCase()).filter(Boolean));
+  for(const m of msgs){
+    if(gSeen.gmail.includes(m.id))continue;gSeen.gmail.push(m.id);
+    let msg;try{msg=await gImpFetch('https://gmail.googleapis.com/gmail/v1/users/me/messages/'+m.id+'?format=metadata&metadataHeaders=From&metadataHeaders=Subject');}catch(e){continue;}
+    const hs=(msg.payload&&msg.payload.headers)||[];
+    const pf=impParseFrom(impHeader(hs,'From'));if(!pf.email)continue;
+    const el=pf.email.toLowerCase();
+    if(/(no-?reply|noreply|do-?not-?reply|notifications?|notification|mailer-daemon|postmaster|bounce|newsletter|mailchimp|sendgrid|automated|googlemail.*noreply)/i.test(el))continue;
+    if(known.has(el))continue;
+    const subject=impHeader(hs,'Subject')||'(sin asunto)';
+    data.unshift(impMake({name:pf.name||pf.email,email:pf.email,src:'Email',tipo:'Email',notes:'Mail nuevo · Asunto: '+subject+(msg.snippet?' — '+String(msg.snippet).slice(0,120):'')}));
+    known.add(el);added++;}
+  if(gSeen.gmail.length>600)gSeen.gmail=gSeen.gmail.slice(-600);
+  return added;}
+async function importYouTube(){
+  const ch=await gImpFetch('https://www.googleapis.com/youtube/v3/channels?part=contentDetails,id&mine=true');
+  const channel=(ch.items||[])[0];if(!channel)return 0;
+  const myId=channel.id;
+  const uploads=channel.contentDetails&&channel.contentDetails.relatedPlaylists&&channel.contentDetails.relatedPlaylists.uploads;
+  if(!uploads)return 0;
+  const pl=await gImpFetch('https://www.googleapis.com/youtube/v3/playlistItems?part=contentDetails&maxResults=5&playlistId='+uploads);
+  const vids=(pl.items||[]).map(i=>i.contentDetails&&i.contentDetails.videoId).filter(Boolean);let added=0;
+  for(const vid of vids){
+    let r;try{r=await gImpFetch('https://www.googleapis.com/youtube/v3/commentThreads?part=snippet&maxResults=20&order=time&videoId='+vid);}catch(e){continue;}
+    for(const th of (r.items||[])){
+      if(gSeen.yt.includes(th.id))continue;gSeen.yt.push(th.id);
+      const sn=th.snippet&&th.snippet.topLevelComment&&th.snippet.topLevelComment.snippet;if(!sn)continue;
+      if(sn.authorChannelId&&sn.authorChannelId.value===myId)continue;
+      const text=String(sn.textOriginal||sn.textDisplay||'').slice(0,200);
+      data.unshift(impMake({name:sn.authorDisplayName||'(YouTube)',src:'YouTube',tipo:'Comentario',notes:'Comentó en YouTube: '+text,ig:sn.authorChannelUrl||''}));
+      added++;}}
+  if(gSeen.yt.length>1200)gSeen.yt=gSeen.yt.slice(-1200);
+  return added;}
+async function impDo(){let n=0;
+  try{n+=await importGmail();}catch(e){console.error('importGmail',e);}
+  try{n+=await importYouTube();}catch(e){console.error('importYouTube',e);}
+  if(n>0){save();render();toast('⚡ '+n+(n>1?' interacciones nuevas':' interacción nueva'));}
+  setImpUI();return n;}
+async function impAuto(){if(gImporting||gImportedThisSession||!importOn)return;gImporting=true;
+  try{await gGetImpToken(false);gImportedThisSession=true;await impDo();}
+  catch(e){importOn=false;localStorage.removeItem('imp_on');setImpUI();}
+  finally{gImporting=false;}}
+async function impConnect(){if(gImporting)return;gImporting=true;toast('Abriendo Google…');setImpUI();
+  try{await gGetImpToken(true);importOn=true;localStorage.setItem('imp_on','1');gImportedThisSession=true;scheduleCloud();
+    setImpUI();toast('Gmail + YouTube conectados ✓');await impDo();}
+  catch(e){toast('No se pudo conectar Gmail/YouTube');console.error('impConnect',e);}
+  finally{gImporting=false;setImpUI();}}
+function impDisconnect(){importOn=false;gImpToken=null;localStorage.removeItem('imp_on');scheduleCloud();setImpUI();toast('Importación desconectada');}
+function impToggle(){if(importOn)impDisconnect();else impConnect();}
+async function impNow(){if(gImporting){toast('Trayendo…');return;}gImporting=true;setImpUI();
+  try{await gGetImpToken(!importOn);importOn=true;localStorage.setItem('imp_on','1');const n=await impDo();if(!n)toast('No hay interacciones nuevas');}
+  catch(e){toast('No pude traer ahora');console.error('impNow',e);}finally{gImporting=false;setImpUI();}}
+function setImpUI(){const b=document.getElementById('impBtn');const nb=document.getElementById('impNowBtn');const s=document.getElementById('impStatus');
+  if(b)b.textContent=importOn?'Desconectar Gmail + YouTube':'Conectar Gmail + YouTube';
+  if(nb)nb.classList.toggle('hide',!importOn);
+  if(s)s.textContent=gImporting?'Trayendo interacciones…':(importOn?'Conectado ✓ — al abrir la app entran solas las interacciones nuevas (mails de remitentes nuevos y comentarios de tus videos recientes) en la columna "Nueva interacción".':'No conectado. Conectá para que entren solas las interacciones de Gmail y YouTube.');}
+
 /* ============ SETTINGS ============ */
-function openSettings(){document.getElementById('s_pin').value='';document.getElementById('s_artist').value=artist();setGcalUI();document.getElementById('sOverlay').classList.add('show');}
+function openSettings(){document.getElementById('s_pin').value='';document.getElementById('s_artist').value=artist();setGcalUI();setImpUI();document.getElementById('sOverlay').classList.add('show');}
 function closeSettings(){document.getElementById('sOverlay').classList.remove('show');}
 async function saveSettings(){const p=document.getElementById('s_pin').value.trim();const ar=document.getElementById('s_artist').value.trim();
   if(ar)localStorage.setItem(ARTKEY,ar);
