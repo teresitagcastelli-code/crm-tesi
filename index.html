@@ -107,6 +107,10 @@
   .gen-badge{font-size:10px;background:var(--gold-soft);color:var(--gold);border-radius:20px;padding:1px 7px;font-weight:700}
   .mini{font-size:11px;font-weight:700;padding:5px 9px;border-radius:8px;background:var(--panel);color:var(--txt);border:1px solid var(--line);white-space:nowrap}
   .mini:hover{border-color:var(--gold)} .mini.ok{background:var(--ok);color:#0c1f15;border:none}
+  .task-row{display:grid;grid-template-columns:1fr auto auto auto;gap:7px;align-items:center;background:var(--panel);border:1px solid var(--line);border-radius:9px;padding:8px 10px;margin-bottom:6px}
+  .task-row select,.task-row input[type=date],.task-row input[type=time]{background:var(--bg);border:1px solid var(--line);color:var(--txt);border-radius:6px;padding:5px 7px;font-size:12px}
+  .task-del{background:none;border:none;color:var(--muted);cursor:pointer;font-size:18px;line-height:1;padding:0 4px}
+  .task-del:hover{color:var(--bad)}
   .loglist{margin-top:12px;border-left:2px solid var(--line);padding-left:2px;max-height:230px;overflow:auto}
   .logitem{display:flex;gap:10px;align-items:flex-start;padding:7px 0 7px 12px;position:relative}
   .logdot{position:absolute;left:-5px;top:11px;width:8px;height:8px;border-radius:50%;background:var(--gold);border:2px solid var(--panel)}
@@ -201,10 +205,8 @@
       <div><label>Etapa del funnel</label><select id="f_stage"></select></div>
       <div><label>País</label><input id="f_country" placeholder="Ej: Argentina"></div>
 
-      <div class="sect">Próxima acción</div>
-      <div><label>Acción</label><select id="f_action"></select></div>
-      <div><label>Fecha</label><input id="f_date" type="date"></div>
-      <div><label>Hora (opcional)</label><input id="f_time" type="time"></div>
+      <div class="sect">Tareas <button class="icon-btn btn-primary" style="margin-left:8px" onclick="addTaskRow()">＋ Agregar tarea</button></div>
+      <div class="full" id="tasksContainer"></div>
       <div class="full"><label>Nota / detalle</label><textarea id="f_notes" placeholder="Ej: Enviar dossier de la serie nueva…"></textarea></div>
 
       <div class="sect">Métricas</div>
@@ -419,7 +421,11 @@ let gcalId=localStorage.getItem('gcal_id')||null;
 let gConnected=localStorage.getItem('gcal_connected')==='1';
 function migrateContact(c){if(!c.att)c.att={budgets:[],imgs:[]};
   if(c.att.budget!==undefined){if(c.att.budget)c.att.budgets=[c.att.budget];delete c.att.budget;}
-  if(!c.att.budgets)c.att.budgets=[];if(!c.att.imgs)c.att.imgs=[];if(!c.log)c.log=[];}
+  if(!c.att.budgets)c.att.budgets=[];if(!c.att.imgs)c.att.imgs=[];if(!c.log)c.log=[];
+  if(!c.tasks){c.tasks=[];
+    if(c.action||c.date){const t={id:id(),action:c.action||'',date:c.date||'',time:c.time||'',done:false};
+      if(c.gev)t.gev=c.gev;c.tasks.push(t);}
+    delete c.action;delete c.date;delete c.time;delete c.gev;}}
 function loadData(){try{data=JSON.parse(localStorage.getItem(KEY))||null;}catch(e){data=null;}
   if(!data){data=seed();save();}
   data.forEach(migrateContact);
@@ -501,7 +507,7 @@ function seed(){return [
   mk('Ornella Ruiz D\u00edaz','Artistas','Instagram','@ornella.ruizdiaz','','','Reuni\u00f3n RRPP','Artista.'),
   mk('We Make it Pop','Prensa','Instagram','@wemakeit_pop','','','Reuni\u00f3n RRPP','Prensa / difusi\u00f3n (@wemakeit_pop).'),
 ];}
-function mk(name,seg,src,ig,phone,email,action,notes){return {id:id(),name,seg,src,stage:'nuevo',country:'Argentina',val:0,cost:0,phone,email,ig,address:'',action,date:'',notes,partner:'',kids:'',bday:'',interests:'',att:{budgets:[],imgs:[]},log:[{ts:'2026-06-10T16:00:00.000Z',text:'Contacto creado (importado de \u201cCRM casero junio\u201d)'}]};}
+function mk(name,seg,src,ig,phone,email,action,notes){return {id:id(),name,seg,src,stage:'nuevo',country:'Argentina',val:0,cost:0,phone,email,ig,address:'',tasks:action?[{id:id(),action,date:'',time:'',done:false}]:[],notes,partner:'',kids:'',bday:'',interests:'',att:{budgets:[],imgs:[]},log:[{ts:'2026-06-10T16:00:00.000Z',text:'Contacto creado (importado de \u201cCRM casero junio\u201d)'}]};}
 function seedEvents(){return [];}
 function id(){return 'c'+Math.random().toString(36).slice(2,9);}
 
@@ -513,7 +519,6 @@ function buildSelects(){const opt=(arr,sel)=>arr.map(v=>`<option ${v===sel?'sele
   document.getElementById('f_src').innerHTML=opt(SOURCES);
   document.getElementById('f_tipo').innerHTML=ITYPES.map(t=>`<option value="${t}">${t||'— sin tipo —'}</option>`).join('');
   document.getElementById('f_stage').innerHTML=STAGES.map(s=>`<option value="${s.id}">${s.name}</option>`).join('');
-  document.getElementById('f_action').innerHTML=ACTIONS.map(a=>`<option value="${a}">${a||'— sin acción —'}</option>`).join('');
   document.getElementById('q_src').innerHTML=opt(SOURCES,'Instagram');
   document.getElementById('q_tipo').innerHTML=ITYPES.map(t=>`<option value="${t}">${t||'— sin tipo —'}</option>`).join('');}
 
@@ -560,20 +565,23 @@ function renderBoard(list){const b=document.getElementById('board');b.innerHTML=
       if(c&&c.stage!==s.id){const old=c.stage;c.stage=s.id;pushLog(c,'Etapa: '+stageName(old)+' → '+s.name);save();render();if(gConnected)gPushTask(c);toast('Movido a "'+s.name+'"');}});
     b.appendChild(col);});}
 function cardEl(c){const el=document.createElement('div');el.className='card';el.draggable=true;
-  const od=c.date&&c.date<today()&&!['ganado','perdido'].includes(c.stage);
+  const nt=(c.tasks||[]).filter(t=>!t.done&&t.date).sort((a,b)=>a.date.localeCompare(b.date))[0]||
+            (c.tasks||[]).filter(t=>!t.done&&t.action)[0]||null;
+  const od=nt&&nt.date&&nt.date<today()&&!['ganado','perdido'].includes(c.stage);
   const nb=(c.att&&c.att.budgets&&c.att.budgets.length)?`<span class="gen-badge">📄 ${c.att.budgets.length}</span>`:'';
   el.innerHTML=`<div class="name"><span>${esc(c.name)}</span>${nb}</div>
     <div class="meta"><span class="badge" style="background:${(SEG_COLORS[c.seg]||'#888')}22;color:${SEG_COLORS[c.seg]||'#aaa'}">${esc(c.seg||'Sin clasificar')}</span>
       <span class="src">${SRC_ICON[c.src]||''} ${esc(c.src)}${c.tipo?' · '+esc(c.tipo):''}</span></div>
-    ${c.action?`<div class="act">→ ${esc(c.action)}</div>`:''}
-    <div class="row"><span class="val">${money(c.val)}</span>${c.date?`<span class="next ${od?'over':''}">📅 ${fmtDate(c.date)}</span>`:''}</div>`;
+    ${nt&&nt.action?`<div class="act">→ ${esc(nt.action)}</div>`:''}
+    <div class="row"><span class="val">${money(c.val)}</span>${nt&&nt.date?`<span class="next ${od?'over':''}">📅 ${fmtDate(nt.date)}</span>`:''}</div>`;
   el.addEventListener('dragstart',e=>{e.dataTransfer.setData('id',c.id);el.classList.add('drag');});
   el.addEventListener('dragend',()=>el.classList.remove('drag'));
   el.addEventListener('click',()=>openContact(c.id));return el;}
 
 function renderAgenda(list){
-  const tasks=list.filter(c=>c.date&&!['ganado','perdido'].includes(c.stage))
-    .map(c=>({type:'task',date:c.date,c}));
+  const tasks=[];
+  list.filter(c=>!['ganado','perdido'].includes(c.stage)).forEach(c=>{
+    (c.tasks||[]).filter(t=>!t.done&&t.date).forEach(t=>tasks.push({type:'task',date:t.date,c,t}));});
   const psrc=gConnected?gEvents:events;
   const evs=psrc.map(e=>({type:'personal',date:e.date,e}));
   const all=tasks.concat(evs).sort((a,b)=>a.date.localeCompare(b.date)||(a.type==='personal'?1:-1));
@@ -591,14 +599,14 @@ function renderAgenda(list){
   groups.forEach(g=>{const items=all.filter(g.f);if(!items.length)return;any=true;
     html+=`<div class="agenda-group ${g.urgent?'urgent':''}"><h3>${g.t}<span class="pill">${items.length}</span></h3>`;
     items.forEach(x=>{const over=x.date<tdy;
-      if(x.type==='task'){const c=x.c;const col=SEG_COLORS[c.seg]||'#888';
+      if(x.type==='task'){const c=x.c;const t=x.t;const col=SEG_COLORS[c.seg]||'#888';
         html+=`<div class="todo"><span class="tdot" style="background:${col}"></span>
           <div class="ti" onclick="openContact('${c.id}')" style="cursor:pointer">
-            <b>${esc(c.action||'Acción')} · ${esc(c.name)}</b>
+            <b>${esc(t.action||'Acción')} · ${esc(c.name)}</b>
             <div class="sub">${esc(c.seg||'Sin clasificar')} · ${SRC_ICON[c.src]||''} ${esc(c.src)}${c.notes?' · '+esc(c.notes.slice(0,50)):''}</div></div>
-          <span class="when ${over?'over':''}">${fmtFull(c.date)}${c.time?' · '+c.time+' hs':''}</span>
-          <button class="mini ok" onclick="event.stopPropagation();markDone('${c.id}')">✓ Hecho</button>
-          <button class="mini" onclick="event.stopPropagation();reprogram('${c.id}',this)">Reprogramar</button></div>`;
+          <span class="when ${over?'over':''}">${fmtFull(t.date)}${t.time?' · '+t.time+' hs':''}</span>
+          <button class="mini ok" onclick="event.stopPropagation();markDone('${c.id}','${t.id}')">✓ Hecho</button>
+          <button class="mini" onclick="event.stopPropagation();reprogram('${c.id}','${t.id}',this)">Reprogramar</button></div>`;
       }else{const e=x.e;const clk=!gConnected;
         html+=`<div class="todo personal"><span class="tdot" style="background:#9a98ad"></span>
           <div class="ti" ${clk?`onclick="openEvent('${e.id}')" style="cursor:pointer"`:''}>
@@ -608,23 +616,27 @@ function renderAgenda(list){
     html+='</div>';});
   if(!any)html+='<div class="empty-col" style="padding:40px">No hay tareas ni eventos. Asigná una "Próxima acción" con fecha.</div>';
   a.innerHTML=html;}
-function markDone(id){const c=data.find(x=>x.id===id);if(!c)return;
-  pushLog(c,'✓ Hecho: '+(c.action||'tarea')+(c.date?' ('+fmtLong(c.date)+')':''));
-  c.action='';c.date='';save();if(gConnected)gPushTask(c);render();toast('¡Hecho! ✓');}
-function reprogram(id,btn){const c=data.find(x=>x.id===id);if(!c)return;
-  const inp=document.createElement('input');inp.type='date';inp.value=c.date||today();
+function markDone(cid,tid){const c=data.find(x=>x.id===cid);if(!c)return;
+  const t=(c.tasks||[]).find(x=>x.id===tid);if(!t)return;
+  pushLog(c,'✓ Hecho: '+(t.action||'tarea')+(t.date?' ('+fmtLong(t.date)+')':''));
+  t.done=true;t.date='';save();if(gConnected)gPushTask(c);render();toast('¡Hecho! ✓');}
+function reprogram(cid,tid,btn){const c=data.find(x=>x.id===cid);if(!c)return;
+  const t=(c.tasks||[]).find(x=>x.id===tid);if(!t)return;
+  const inp=document.createElement('input');inp.type='date';inp.value=t.date||today();
   inp.className='mini';inp.style.padding='4px';
-  inp.onchange=()=>{const old=c.date;c.date=inp.value;pushLog(c,'Reprogramada: '+(old||'—')+' → '+inp.value);save();if(gConnected)gPushTask(c);render();toast('Reprogramada ✓');};
+  inp.onchange=()=>{const old=t.date;t.date=inp.value;pushLog(c,'Reprogramada: '+(old||'—')+' → '+inp.value);save();if(gConnected)gPushTask(c);render();toast('Reprogramada ✓');};
   btn.parentNode.replaceChild(inp,btn);inp.focus();if(inp.showPicker){try{inp.showPicker();}catch(e){}}}
 
 function renderTable(list){const t=document.getElementById('table');const sn=i=>STAGES.find(s=>s.id===i)?.name||i;
+  const ft=c=>(c.tasks||[]).filter(x=>!x.done&&x.date).sort((a,b)=>a.date.localeCompare(b.date))[0]||
+              (c.tasks||[]).find(x=>!x.done&&x.action)||null;
   t.innerHTML=`<table><thead><tr><th>Nombre</th><th>Segmento</th><th>Origen</th><th>País</th><th>Etapa</th><th>Acción</th><th>Valor</th><th>Fecha</th></tr></thead>
-    <tbody>${list.map(c=>`<tr onclick="openContact('${c.id}')">
+    <tbody>${list.map(c=>{const nt=ft(c);return`<tr onclick="openContact('${c.id}')">
       <td><b>${esc(c.name)}</b></td>
       <td><span class="badge" style="background:${(SEG_COLORS[c.seg]||'#888')}22;color:${SEG_COLORS[c.seg]||'#aaa'}">${esc(c.seg||'Sin clasificar')}</span></td>
       <td>${SRC_ICON[c.src]||''} ${esc(c.src)}</td><td>${esc(c.country||'—')}</td>
-      <td>${esc(sn(c.stage))}</td><td style="color:var(--accent)">${esc(c.action||'—')}</td>
-      <td class="val">${money(c.val)}</td><td>${c.date?fmtFull(c.date):'—'}</td></tr>`).join('')}</tbody></table>`;
+      <td>${esc(sn(c.stage))}</td><td style="color:var(--accent)">${esc(nt&&nt.action||'—')}</td>
+      <td class="val">${money(c.val)}</td><td>${nt&&nt.date?fmtFull(nt.date):'—'}</td></tr>`;}).join('')}</tbody></table>`;
   if(!list.length)t.innerHTML='<div class="empty-col" style="padding:40px">Sin contactos que coincidan.</div>';}
 
 /* ============ CONTACT MODAL ============ */
@@ -632,7 +644,7 @@ async function openContact(cid){editingId=cid||null;const c=cid?data.find(x=>x.i
   document.getElementById('cTitle').textContent=cid?'Editar contacto':'Nuevo contacto';
   document.getElementById('delBtn').classList.toggle('hide',!cid);
   f('name',c.name);f('seg',cid?(c.seg||''):SEGMENTS[3]);f('src',c.src||'WhatsApp');f('tipo',c.tipo||'');f('stage',c.stage||'nuevo');
-  f('country',c.country);f('action',c.action||'');f('date',c.date);f('time',c.time||'');f('notes',c.notes);
+  f('country',c.country);renderTasksUI(c.tasks||[]);f('notes',c.notes);
   f('val',c.val||'');f('cost',c.cost||'');f('phone',c.phone);f('email',c.email);f('ig',c.ig);
   f('address',c.address);f('partner',c.partner);f('kids',c.kids);f('bday',c.bday);f('interests',c.interests);
   updateMaps();draftAtt=c.att?JSON.parse(JSON.stringify(c.att)):{budgets:[],imgs:[]};
@@ -640,13 +652,30 @@ async function openContact(cid){editingId=cid||null;const c=cid?data.find(x=>x.i
   await renderAtt();renderLog();dirty=false;document.getElementById('cOverlay').classList.add('show');}
 function f(k,v){document.getElementById('f_'+k).value=v==null?'':v;}
 function fv(k){return document.getElementById('f_'+k).value.trim();}
+function taskActionOpts(val){return ACTIONS.map(a=>`<option value="${a}"${a===val?' selected':''}>${a||'— sin acción —'}</option>`).join('');}
+function addTaskRow(task){task=task||{id:id(),action:'',date:'',time:'',done:false};
+  const container=document.getElementById('tasksContainer');
+  const row=document.createElement('div');row.className='task-row';row.dataset.tid=task.id;
+  row.innerHTML=`<select class="t-action">${taskActionOpts(task.action)}</select>`+
+    `<input class="t-date" type="date" value="${task.date||''}">`+
+    `<input class="t-time" type="time" value="${task.time||''}">`+
+    `<button class="task-del" onclick="this.closest('.task-row').remove();dirty=true" title="Quitar tarea">×</button>`;
+  container.appendChild(row);dirty=true;}
+function renderTasksUI(tasks){const c=document.getElementById('tasksContainer');c.innerHTML='';(tasks||[]).forEach(t=>addTaskRow(t));}
+function collectTasks(){
+  const rows=[...document.getElementById('tasksContainer').querySelectorAll('.task-row')];
+  const existing=(editingId?(data.find(x=>x.id===editingId)||{}).tasks:[]) ||[];
+  return rows.map(r=>{const tid=r.dataset.tid;const prev=existing.find(t=>t.id===tid)||{};
+    return {id:tid,action:r.querySelector('.t-action').value,date:r.querySelector('.t-date').value,
+      time:r.querySelector('.t-time').value,done:prev.done||false,...(prev.gev?{gev:prev.gev}:{})};
+  }).filter(t=>t.action||t.date);}
 document.getElementById('cBody').addEventListener('input',()=>dirty=true);
 document.getElementById('cBody').addEventListener('change',()=>dirty=true);
 function updateMaps(){const a=fv('address');const l=document.getElementById('mapsLink');
   if(a){l.href='https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(a);l.classList.remove('hide');}else l.classList.add('hide');}
 
 function collect(){return {name:fv('name'),seg:fv('seg'),src:fv('src'),tipo:fv('tipo'),stage:fv('stage'),country:fv('country'),
-  action:fv('action'),date:fv('date'),time:fv('time'),notes:fv('notes'),val:+fv('val')||0,cost:+fv('cost')||0,
+  tasks:collectTasks(),notes:fv('notes'),val:+fv('val')||0,cost:+fv('cost')||0,
   phone:fv('phone'),email:fv('email'),ig:fv('ig'),address:fv('address'),
   partner:fv('partner'),kids:fv('kids'),bday:fv('bday'),interests:fv('interests'),att:draftAtt};}
 function stageName(idv){return STAGES.find(s=>s.id===idv)?.name||idv;}
@@ -658,7 +687,7 @@ function closeQuick(){document.getElementById('qOverlay').classList.remove('show
 function saveQuick(){const name=document.getElementById('q_name').value.trim();
   if(!name){toast('Poné un nombre o handle');return;}
   const obj={id:id(),name,seg:'',src:document.getElementById('q_src').value,tipo:document.getElementById('q_tipo').value,
-    stage:'interaccion',country:'',action:'',date:'',time:'',notes:document.getElementById('q_notes').value.trim(),
+    stage:'interaccion',country:'',tasks:[],notes:document.getElementById('q_notes').value.trim(),
     val:0,cost:0,phone:'',email:'',ig:'',address:'',partner:'',kids:'',bday:'',interests:'',att:{budgets:[],imgs:[]},log:[]};
   pushLog(obj,'Interacción registrada'+(obj.tipo?' ('+obj.tipo+')':'')+' · '+obj.src);
   data.unshift(obj);
@@ -683,7 +712,7 @@ function saveContact(){if(persist(false)){document.getElementById('cOverlay').cl
 function deleteContact(){if(!editingId)return;
   if(confirm('¿Eliminar este contacto?')){const c=data.find(x=>x.id===editingId);
     if(c&&c.att){(c.att.imgs||[]).forEach(i=>attDel(i.key));(c.att.budgets||[]).forEach(b=>attDel(b.key));}
-    if(c&&c.gev&&gConnected&&gcalId){try{gApi('/calendars/'+encodeURIComponent(gcalId)+'/events/'+c.gev,{method:'DELETE'});}catch(e){}}
+    if(c&&gConnected&&gcalId){(c.tasks||[]).forEach(t=>{if(t.gev)try{gApi('/calendars/'+encodeURIComponent(gcalId)+'/events/'+t.gev,{method:'DELETE'});}catch(e){}});}
     data=data.filter(x=>x.id!==editingId);save();dirty=false;document.getElementById('cOverlay').classList.remove('show');render();toast('Eliminado');}}
 
 /* unsaved-changes flow */
@@ -839,8 +868,8 @@ function saveEvent(){const title=document.getElementById('e_title').value.trim()
 function deleteEvent(){if(editingEvent&&confirm('¿Eliminar este evento?')){events=events.filter(x=>x.id!==editingEvent);saveEvents();closeEvent();render();toast('Eliminado');}}
 
 /* ============ GOOGLE CALENDAR ============ */
-function gcalUrl(c){if(!c.date)return'#';const s=c.date.replace(/-/g,'');const e=addDays(c.date,1).replace(/-/g,'');
-  const text=encodeURIComponent((c.action||'Acción CRM')+' · '+c.name);
+function gcalUrl(c){const t=(c.tasks||[]).find(x=>!x.done&&x.date);if(!t)return'#';const s=t.date.replace(/-/g,'');const e=addDays(t.date,1).replace(/-/g,'');
+  const text=encodeURIComponent((t.action||'Acción CRM')+' · '+c.name);
   let det=c.notes||'';if(c.phone)det+='\nTel: '+c.phone;if(c.email)det+='\nEmail: '+c.email;if(c.ig)det+='\nIG: '+c.ig;
   return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${text}&dates=${s}/${e}&details=${encodeURIComponent(det)}`;}
 
@@ -865,21 +894,22 @@ async function gEnsureCal(){if(gcalId)return gcalId;
   let cal=(list.items||[]).find(c=>c.summary==='CRM Tesi');
   if(!cal){cal=await gApi('/calendars',{method:'POST',body:JSON.stringify({summary:'CRM Tesi',timeZone:'America/Argentina/Buenos_Aires'})});}
   gcalId=cal.id;localStorage.setItem('gcal_id',gcalId);return gcalId;}
-function gTaskEvent(c){let det=c.notes||'';if(c.phone)det+='\nTel: '+c.phone;if(c.email)det+='\nEmail: '+c.email;
-  const ev={summary:(c.action||'Acción')+' · '+c.name,description:det,extendedProperties:{private:{crmContact:c.id}}};
-  if(c.time){const[h,m]=c.time.split(':');const eh=(+h+1);const ed=eh>=24?addDays(c.date,1):c.date;const ehh=String(eh%24).padStart(2,'0');
-    ev.start={dateTime:c.date+'T'+c.time+':00-03:00',timeZone:'America/Argentina/Buenos_Aires'};
+function gTaskEvent(c,t){let det=c.notes||'';if(c.phone)det+='\nTel: '+c.phone;if(c.email)det+='\nEmail: '+c.email;
+  const ev={summary:(t.action||'Acción')+' · '+c.name,description:det,extendedProperties:{private:{crmContact:c.id,crmTask:t.id}}};
+  if(t.time){const[h,m]=t.time.split(':');const eh=(+h+1);const ed=eh>=24?addDays(t.date,1):t.date;const ehh=String(eh%24).padStart(2,'0');
+    ev.start={dateTime:t.date+'T'+t.time+':00-03:00',timeZone:'America/Argentina/Buenos_Aires'};
     ev.end={dateTime:ed+'T'+ehh+':'+m+':00-03:00',timeZone:'America/Argentina/Buenos_Aires'};}
-  else{ev.start={date:c.date};ev.end={date:addDays(c.date,1)};}
+  else{ev.start={date:t.date};ev.end={date:addDays(t.date,1)};}
   return ev;}
 async function gPushTask(c){if(!gConnected||!gToken||!gcalId)return;
-  const open=c.date&&c.action&&!['ganado','perdido'].includes(c.stage);
-  try{
-    if(open){const ev=gTaskEvent(c);
-      if(c.gev){await gApi('/calendars/'+encodeURIComponent(gcalId)+'/events/'+c.gev,{method:'PATCH',body:JSON.stringify(ev)});}
-      else{const r=await gApi('/calendars/'+encodeURIComponent(gcalId)+'/events',{method:'POST',body:JSON.stringify(ev)});c.gev=r.id;save();}
-    }else if(c.gev){try{await gApi('/calendars/'+encodeURIComponent(gcalId)+'/events/'+c.gev,{method:'DELETE'});}catch(e){}delete c.gev;save();}
-  }catch(e){if(e&&e.code===401)gSilent();else console.error('gPushTask',e);}}
+  const closed=['ganado','perdido'].includes(c.stage);
+  try{for(const t of (c.tasks||[])){
+    const open=t.date&&t.action&&!t.done&&!closed;
+    if(open){const ev=gTaskEvent(c,t);
+      if(t.gev){await gApi('/calendars/'+encodeURIComponent(gcalId)+'/events/'+t.gev,{method:'PATCH',body:JSON.stringify(ev)});}
+      else{const r=await gApi('/calendars/'+encodeURIComponent(gcalId)+'/events',{method:'POST',body:JSON.stringify(ev)});t.gev=r.id;save();}}
+    else if(t.gev){try{await gApi('/calendars/'+encodeURIComponent(gcalId)+'/events/'+t.gev,{method:'DELETE'});}catch(e){}delete t.gev;save();}
+  }}catch(e){if(e&&e.code===401)gSilent();else console.error('gPushTask',e);}}
 async function gPushAll(){for(const c of data){await gPushTask(c);}}
 async function gPullAll(){try{
   const cl=await gApi('/users/me/calendarList');
@@ -925,7 +955,7 @@ function impParseFrom(s){s=s||'';const m=s.match(/<([^>]+)>/);
   if(!email){const m2=s.match(/[\w.+-]+@[\w.-]+\.\w+/);email=m2?m2[0]:'';}
   return {name,email};}
 function impMake(o){return {id:id(),name:o.name||'(sin nombre)',seg:'',src:o.src||'Otro',tipo:o.tipo||'',
-  stage:'interaccion',country:'',action:'',date:'',time:'',notes:o.notes||'',val:0,cost:0,
+  stage:'interaccion',country:'',tasks:[],notes:o.notes||'',val:0,cost:0,
   phone:'',email:o.email||'',ig:o.ig||'',address:'',partner:'',kids:'',bday:'',interests:'',
   att:{budgets:[],imgs:[]},log:[{ts:nowStamp(),text:'Importado de '+(o.src||'canal')}]};}
 async function importGmail(){
@@ -1010,21 +1040,24 @@ function wipe(){if(confirm('Esto borra TODOS los contactos de este dispositivo. 
 
 /* ============ IMPORT / EXPORT ============ */
 function exportXlsx(){const sn=i=>STAGES.find(s=>s.id===i)?.name||i;
-  const rows=data.map(c=>({Nombre:c.name,Segmento:c.seg,Origen:c.src,Pais:c.country||'',Etapa:sn(c.stage),
-    'Proxima accion':c.action||'','Fecha accion':c.date||'','Valor USD':c.val||0,'Costo USD':c.cost||0,
+  const rows=data.map(c=>{const nt=(c.tasks||[]).filter(x=>!x.done&&x.date).sort((a,b)=>a.date.localeCompare(b.date))[0]||(c.tasks||[]).find(x=>!x.done&&x.action)||null;return{Nombre:c.name,Segmento:c.seg,Origen:c.src,Pais:c.country||'',Etapa:sn(c.stage),
+    'Proxima accion':nt&&nt.action||'','Fecha accion':nt&&nt.date||'','Valor USD':c.val||0,'Costo USD':c.cost||0,
     Telefono:c.phone||'',Email:c.email||'',Instagram:c.ig||'',Direccion:c.address||'',
     Pareja:c.partner||'',Hijos:c.kids||'',Cumpleanos:c.bday||'',Intereses:c.interests||'',
-    Presupuestos:(c.att&&c.att.budgets?c.att.budgets.length:0),Nota:c.notes||''}));
+    Presupuestos:(c.att&&c.att.budgets?c.att.budgets.length:0),Nota:c.notes||''}});
   const ws=XLSX.utils.json_to_sheet(rows);const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'Contactos');
   XLSX.writeFile(wb,`CRM_backup_${today()}.xlsx`);toast('Excel descargado · guardalo en Drive');}
 function importFile(ev){const file=ev.target.files[0];if(!file)return;const reader=new FileReader();
   reader.onload=e=>{try{const wb=XLSX.read(e.target.result,{type:'binary'});const rows=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);let n=0;
     rows.forEach(r=>{const name=r.Nombre||r.nombre||r.Name||r.name||r['Full Name']||r['First Name']||'';if(!name)return;
       const stg=STAGES.find(s=>s.name.toLowerCase()===String(r.Etapa||'').toLowerCase());
-      data.unshift({id:id(),name:String(name),seg:normSeg(r.Segmento||r.segmento||r.Tipo||''),
+      const csvAction=String(r['Proxima accion']||r['Próxima acción']||'');
+        const csvDate=fixDate(r['Fecha accion']||r['Fecha']||'');
+        const csvTasks=(csvAction||csvDate)?[{id:id(),action:csvAction,date:csvDate,time:'',done:false}]:[];
+        data.unshift({id:id(),name:String(name),seg:normSeg(r.Segmento||r.segmento||r.Tipo||''),
         src:normSrc(r.Origen||r.origen||r.Source||r.Fuente||''),stage:stg?stg.id:'nuevo',
-        country:String(r.Pais||r['País']||r.Country||''),action:String(r['Proxima accion']||r['Próxima acción']||''),
-        date:fixDate(r['Fecha accion']||r['Fecha']||''),val:+(r['Valor USD']||r.Valor||r.valor||r.Value||0)||0,
+        country:String(r.Pais||r['País']||r.Country||''),tasks:csvTasks,
+        val:+(r['Valor USD']||r.Valor||r.valor||r.Value||0)||0,
         cost:+(r['Costo USD']||r.Costo||r.costo||0)||0,
         phone:String(r.Telefono||r['Teléfono']||r.telefono||r.Phone||r.WhatsApp||r.Celular||''),
         email:String(r.Email||r.email||r['E-mail']||r.Correo||''),ig:String(r.Instagram||r.instagram||r.IG||''),
