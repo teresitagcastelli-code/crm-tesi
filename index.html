@@ -755,21 +755,24 @@ function renderBoard(list){const b=document.getElementById('board');b.innerHTML=
       const cid=e.dataTransfer.getData('id');const c=data.find(x=>x.id===cid);
       if(c&&c.stage!==s.id){const old=c.stage;c.stage=s.id;pushLog(c,'Etapa: '+stageName(old)+' → '+s.name);save();render();if(gConnected)gPushTask(c);toast('Movido a "'+s.name+'"');}});
     b.appendChild(col);});}
+function nextTask(c){return (c.tasks||[]).find(t=>!t.done)||null;}
 function cardEl(c){const el=document.createElement('div');el.className='card';el.draggable=true;
-  const od=c.date&&c.date<today()&&!['ganado','perdido'].includes(c.stage);
+  const nt=nextTask(c);
+  const od=nt&&nt.date&&nt.date<today()&&!['ganado','perdido'].includes(c.stage);
   const nb=(c.att&&c.att.budgets&&c.att.budgets.length)?`<span class="gen-badge">📄 ${c.att.budgets.length}</span>`:'';
   el.innerHTML=`<div class="name"><span>${esc(c.name)}</span>${nb}</div>
     <div class="meta"><span class="badge" style="background:${(SEG_COLORS[c.seg]||'#888')}22;color:${SEG_COLORS[c.seg]||'#aaa'}">${esc(c.seg||'Sin clasificar')}</span>
       <span class="src">${SRC_ICON[c.src]||''} ${esc(c.src)}${c.tipo?' · '+esc(c.tipo):''}</span></div>
-    ${c.action?`<div class="act">→ ${esc(c.action)}</div>`:''}
-    <div class="row"><span class="val">${money(c.val)}</span>${c.date?`<span class="next ${od?'over':''}">📅 ${fmtDate(c.date)}</span>`:''}</div>`;
+    ${nt&&nt.action?`<div class="act">→ ${esc(nt.action)}</div>`:''}
+    <div class="row"><span class="val">${money(c.val)}</span>${nt&&nt.date?`<span class="next ${od?'over':''}">📅 ${fmtDate(nt.date)}</span>`:''}</div>`;
   el.addEventListener('dragstart',e=>{e.dataTransfer.setData('id',c.id);el.classList.add('drag');});
   el.addEventListener('dragend',()=>el.classList.remove('drag'));
   el.addEventListener('click',()=>openContact(c.id));return el;}
 
 function renderAgenda(list){
-  const tasks=list.filter(c=>c.date&&!['ganado','perdido'].includes(c.stage))
-    .map(c=>({type:'task',date:c.date,c}));
+  const tasks=[];
+  list.filter(c=>!['ganado','perdido'].includes(c.stage)).forEach(c=>{
+    (c.tasks||[]).filter(t=>!t.done&&t.date).forEach(t=>tasks.push({type:'task',date:t.date,c,t}));});
   const psrc=gConnected?gEvents:events;
   const evs=psrc.map(e=>({type:'personal',date:e.date,e}));
   const all=tasks.concat(evs).sort((a,b)=>a.date.localeCompare(b.date)||(a.type==='personal'?1:-1));
@@ -787,14 +790,14 @@ function renderAgenda(list){
   groups.forEach(g=>{const items=all.filter(g.f);if(!items.length)return;any=true;
     html+=`<div class="agenda-group ${g.urgent?'urgent':''}"><h3>${g.t}<span class="pill">${items.length}</span></h3>`;
     items.forEach(x=>{const over=x.date<tdy;
-      if(x.type==='task'){const c=x.c;const col=SEG_COLORS[c.seg]||'#888';
+      if(x.type==='task'){const c=x.c;const t=x.t;const col=SEG_COLORS[c.seg]||'#888';
         html+=`<div class="todo"><span class="tdot" style="background:${col}"></span>
           <div class="ti" onclick="openContact('${c.id}')" style="cursor:pointer">
-            <b>${esc(c.action||'Acción')} · ${esc(c.name)}</b>
+            <b>${esc(t.action||'Acción')} · ${esc(c.name)}</b>
             <div class="sub">${esc(c.seg||'Sin clasificar')} · ${SRC_ICON[c.src]||''} ${esc(c.src)}${c.notes?' · '+esc(c.notes.slice(0,50)):''}</div></div>
-          <span class="when ${over?'over':''}">${fmtFull(c.date)}${c.time?' · '+c.time+' hs':''}</span>
-          <button class="mini ok" onclick="event.stopPropagation();markDone('${c.id}')">✓ Hecho</button>
-          <button class="mini" onclick="event.stopPropagation();reprogram('${c.id}',this)">Reprogramar</button></div>`;
+          <span class="when ${over?'over':''}">${fmtFull(t.date)}${t.time?' · '+t.time+' hs':''}</span>
+          <button class="mini ok" onclick="event.stopPropagation();markDone('${c.id}','${t.id}')">✓ Hecho</button>
+          <button class="mini" onclick="event.stopPropagation();reprogram('${c.id}','${t.id}',this)">Reprogramar</button></div>`;
       }else{const e=x.e;const clk=!gConnected;
         html+=`<div class="todo personal"><span class="tdot" style="background:#9a98ad"></span>
           <div class="ti" ${clk?`onclick="openEvent('${e.id}')" style="cursor:pointer"`:''}>
@@ -804,13 +807,15 @@ function renderAgenda(list){
     html+='</div>';});
   if(!any)html+='<div class="empty-col" style="padding:40px">No hay tareas ni eventos. Asigná una "Próxima acción" con fecha.</div>';
   a.innerHTML=html;}
-function markDone(id){const c=data.find(x=>x.id===id);if(!c)return;
-  pushLog(c,'✓ Hecho: '+(c.action||'tarea')+(c.date?' ('+fmtLong(c.date)+')':''));
-  c.action='';c.date='';save();if(gConnected)gPushTask(c);render();toast('¡Hecho! ✓');}
-function reprogram(id,btn){const c=data.find(x=>x.id===id);if(!c)return;
-  const inp=document.createElement('input');inp.type='date';inp.value=c.date||today();
+function markDone(cid,tid){const c=data.find(x=>x.id===cid);if(!c)return;
+  const t=(c.tasks||[]).find(x=>x.id===tid);if(!t)return;
+  pushLog(c,'✓ Hecho: '+(t.action||'tarea')+(t.date?' ('+fmtLong(t.date)+')':''));
+  t.done=true;save();if(gConnected)gPushTask(c);render();toast('¡Hecho! ✓');}
+function reprogram(cid,tid,btn){const c=data.find(x=>x.id===cid);if(!c)return;
+  const t=(c.tasks||[]).find(x=>x.id===tid);if(!t)return;
+  const inp=document.createElement('input');inp.type='date';inp.value=t.date||today();
   inp.className='mini';inp.style.padding='4px';
-  inp.onchange=()=>{const old=c.date;c.date=inp.value;pushLog(c,'Reprogramada: '+(old||'—')+' → '+inp.value);save();if(gConnected)gPushTask(c);render();toast('Reprogramada ✓');};
+  inp.onchange=()=>{const old=t.date;t.date=inp.value;pushLog(c,'Reprogramada: '+(old||'—')+' → '+inp.value);save();if(gConnected)gPushTask(c);render();toast('Reprogramada ✓');};
   btn.parentNode.replaceChild(inp,btn);inp.focus();if(inp.showPicker){try{inp.showPicker();}catch(e){}}}
 
 function renderTable(list){const t=document.getElementById('table');const sn=i=>STAGES.find(s=>s.id===i)?.name||i;
@@ -819,8 +824,8 @@ function renderTable(list){const t=document.getElementById('table');const sn=i=>
       <td><b>${esc(c.name)}</b></td>
       <td><span class="badge" style="background:${(SEG_COLORS[c.seg]||'#888')}22;color:${SEG_COLORS[c.seg]||'#aaa'}">${esc(c.seg||'Sin clasificar')}</span></td>
       <td>${SRC_ICON[c.src]||''} ${esc(c.src)}</td><td>${esc(c.country||'—')}</td>
-      <td>${esc(sn(c.stage))}</td><td style="color:var(--accent)">${esc(c.action||'—')}</td>
-      <td class="val">${money(c.val)}</td><td>${c.date?fmtFull(c.date):'—'}</td></tr>`).join('')}</tbody></table>`;
+      <td>${esc(sn(c.stage))}</td><td style="color:var(--accent)">${esc((nextTask(c)&&nextTask(c).action)||'—')}</td>
+      <td class="val">${money(c.val)}</td><td>${(nextTask(c)&&nextTask(c).date)?fmtFull(nextTask(c).date):'—'}</td></tr>`).join('')}</tbody></table>`;
   if(!list.length)t.innerHTML='<div class="empty-col" style="padding:40px">Sin contactos que coincidan.</div>';}
 
 /* ============ CONTACT MODAL ============ */
@@ -828,7 +833,7 @@ async function openContact(cid){editingId=cid||null;const c=cid?data.find(x=>x.i
   document.getElementById('cTitle').textContent=cid?'Editar contacto':'Nuevo contacto';
   document.getElementById('delBtn').classList.toggle('hide',!cid);
   f('name',c.name);f('seg',cid?(c.seg||''):SEGMENTS[3]);f('src',c.src||'WhatsApp');f('tipo',c.tipo||'');f('stage',c.stage||'nuevo');
-  f('country',c.country);f('action',c.action||'');f('date',c.date);f('time',c.time||'');f('notes',c.notes);
+  f('country',c.country);const _nt=nextTask(c)||{};f('action',_nt.action||'');f('date',_nt.date||'');f('time',_nt.time||'');f('notes',c.notes);
   f('val',c.val||'');f('cost',c.cost||'');f('phone',c.phone);f('email',c.email);f('ig',c.ig);
   f('address',c.address);f('partner',c.partner);f('kids',c.kids);f('bday',c.bday);f('interests',c.interests);
   updateMaps();draftAtt=c.att?JSON.parse(JSON.stringify(c.att)):{budgets:[],imgs:[]};
@@ -854,17 +859,23 @@ function closeQuick(){document.getElementById('qOverlay').classList.remove('show
 function saveQuick(){const name=document.getElementById('q_name').value.trim();
   if(!name){toast('Poné un nombre o handle');return;}
   const obj={id:id(),name,seg:'',src:document.getElementById('q_src').value,tipo:document.getElementById('q_tipo').value,
-    stage:'interaccion',country:'',action:'',date:'',time:'',notes:document.getElementById('q_notes').value.trim(),
+    stage:'interaccion',country:'',tasks:[],notes:document.getElementById('q_notes').value.trim(),
     val:0,cost:0,phone:'',email:'',ig:'',address:'',partner:'',kids:'',bday:'',interests:'',att:{budgets:[],imgs:[]},log:[]};
   pushLog(obj,'Interacción registrada'+(obj.tipo?' ('+obj.tipo+')':'')+' · '+obj.src);
   data.unshift(obj);
   try{save();}catch(e){toast('Sin espacio para guardar');return;}
   render();closeQuick();toast('Interacción cargada ⚡');}
 function persist(silent){const name=fv('name');if(!name){toast('Poné un nombre');return false;}
-  const obj=collect();
+  const obj=collect();const {action,date,time}=obj;delete obj.action;delete obj.date;delete obj.time;
   if(editingId){const t=data.find(x=>x.id===editingId);const old=t.stage;Object.assign(t,obj);
+    if(!t.tasks)t.tasks=[];
+    const pt=t.tasks.find(x=>!x.done);
+    if(pt){pt.action=action;pt.date=date;pt.time=time;}
+    else if(action||date){t.tasks.push({id:id(),action:action||'',date:date||'',time:time||'',done:false});}
     if(old!==obj.stage)pushLog(t,'Etapa: '+stageName(old)+' → '+stageName(obj.stage));}
-  else{obj.id=id();obj.log=[];pushLog(obj,'Contacto creado');data.unshift(obj);editingId=obj.id;document.getElementById('delBtn').classList.remove('hide');}
+  else{obj.id=id();obj.log=[];obj.tasks=[];
+    if(action||date)obj.tasks.push({id:id(),action:action||'',date:date||'',time:time||'',done:false});
+    pushLog(obj,'Contacto creado');data.unshift(obj);editingId=obj.id;document.getElementById('delBtn').classList.remove('hide');}
   try{save();}catch(e){toast('Sin espacio: quitá alguna imagen pesada');return false;}
   dirty=false;if(!silent){toast('Guardado');}renderLog();render();
   if(gConnected){const cc=data.find(x=>x.id===editingId);if(cc)gPushTask(cc);}return true;}
@@ -879,7 +890,7 @@ function saveContact(){if(persist(false)){document.getElementById('cOverlay').cl
 function deleteContact(){if(!editingId)return;
   if(confirm('¿Eliminar este contacto?')){const c=data.find(x=>x.id===editingId);
     if(c&&c.att){(c.att.imgs||[]).forEach(i=>attDel(i.key));(c.att.budgets||[]).forEach(b=>attDel(b.key));}
-    if(c&&c.gev&&gConnected&&gcalId){try{gApi('/calendars/'+encodeURIComponent(gcalId)+'/events/'+c.gev,{method:'DELETE'});}catch(e){}}
+    if(c&&gConnected&&gcalId)(c.tasks||[]).filter(t=>t.gev).forEach(t=>{try{gApi('/calendars/'+encodeURIComponent(gcalId)+'/events/'+t.gev,{method:'DELETE'});}catch(e){}});
     data=data.filter(x=>x.id!==editingId);save();dirty=false;document.getElementById('cOverlay').classList.remove('show');render();toast('Eliminado');}}
 
 /* unsaved-changes flow */
@@ -1058,8 +1069,8 @@ function saveEvent(){const title=document.getElementById('e_title').value.trim()
 function deleteEvent(){if(editingEvent&&confirm('¿Eliminar este evento?')){events=events.filter(x=>x.id!==editingEvent);saveEvents();closeEvent();render();toast('Eliminado');}}
 
 /* ============ GOOGLE CALENDAR ============ */
-function gcalUrl(c){if(!c.date)return'#';const s=c.date.replace(/-/g,'');const e=addDays(c.date,1).replace(/-/g,'');
-  const text=encodeURIComponent((c.action||'Acción CRM')+' · '+c.name);
+function gcalUrl(c){const _t=nextTask(c);if(!_t||!_t.date)return'#';const s=_t.date.replace(/-/g,'');const e=addDays(_t.date,1).replace(/-/g,'');
+  const text=encodeURIComponent((_t.action||'Acción CRM')+' · '+c.name);
   let det=c.notes||'';if(c.phone)det+='\nTel: '+c.phone;if(c.email)det+='\nEmail: '+c.email;if(c.ig)det+='\nIG: '+c.ig;
   return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${text}&dates=${s}/${e}&details=${encodeURIComponent(det)}`;}
 
@@ -1084,20 +1095,21 @@ async function gEnsureCal(){if(gcalId)return gcalId;
   let cal=(list.items||[]).find(c=>c.summary==='CRM Tesi');
   if(!cal){cal=await gApi('/calendars',{method:'POST',body:JSON.stringify({summary:'CRM Tesi',timeZone:'America/Argentina/Buenos_Aires'})});}
   gcalId=cal.id;localStorage.setItem('gcal_id',gcalId);return gcalId;}
-function gTaskEvent(c){let det=c.notes||'';if(c.phone)det+='\nTel: '+c.phone;if(c.email)det+='\nEmail: '+c.email;
-  const ev={summary:(c.action||'Acción')+' · '+c.name,description:det,extendedProperties:{private:{crmContact:c.id}}};
-  if(c.time){const[h,m]=c.time.split(':');const eh=(+h+1);const ed=eh>=24?addDays(c.date,1):c.date;const ehh=String(eh%24).padStart(2,'0');
-    ev.start={dateTime:c.date+'T'+c.time+':00-03:00',timeZone:'America/Argentina/Buenos_Aires'};
+function gTaskEvent(c,t){let det=c.notes||'';if(c.phone)det+='\nTel: '+c.phone;if(c.email)det+='\nEmail: '+c.email;
+  const ev={summary:(t.action||'Acción')+' · '+c.name,description:det,extendedProperties:{private:{crmContact:c.id,taskId:t.id}}};
+  if(t.time){const[h,m]=t.time.split(':');const eh=(+h+1);const ed=eh>=24?addDays(t.date,1):t.date;const ehh=String(eh%24).padStart(2,'0');
+    ev.start={dateTime:t.date+'T'+t.time+':00-03:00',timeZone:'America/Argentina/Buenos_Aires'};
     ev.end={dateTime:ed+'T'+ehh+':'+m+':00-03:00',timeZone:'America/Argentina/Buenos_Aires'};}
-  else{ev.start={date:c.date};ev.end={date:addDays(c.date,1)};}
+  else{ev.start={date:t.date};ev.end={date:addDays(t.date,1)};}
   return ev;}
 async function gPushTask(c){if(!gConnected||!gToken||!gcalId)return;
-  const open=c.date&&c.action&&!['ganado','perdido'].includes(c.stage);
+  const nt=nextTask(c);
+  const open=nt&&nt.date&&nt.action&&!['ganado','perdido'].includes(c.stage);
   try{
-    if(open){const ev=gTaskEvent(c);
-      if(c.gev){await gApi('/calendars/'+encodeURIComponent(gcalId)+'/events/'+c.gev,{method:'PATCH',body:JSON.stringify(ev)});}
-      else{const r=await gApi('/calendars/'+encodeURIComponent(gcalId)+'/events',{method:'POST',body:JSON.stringify(ev)});c.gev=r.id;save();}
-    }else if(c.gev){try{await gApi('/calendars/'+encodeURIComponent(gcalId)+'/events/'+c.gev,{method:'DELETE'});}catch(e){}delete c.gev;save();}
+    if(open){const ev=gTaskEvent(c,nt);
+      if(nt.gev){await gApi('/calendars/'+encodeURIComponent(gcalId)+'/events/'+nt.gev,{method:'PATCH',body:JSON.stringify(ev)});}
+      else{const r=await gApi('/calendars/'+encodeURIComponent(gcalId)+'/events',{method:'POST',body:JSON.stringify(ev)});nt.gev=r.id;save();}
+    }else{(c.tasks||[]).forEach(async t=>{if(t.gev){try{await gApi('/calendars/'+encodeURIComponent(gcalId)+'/events/'+t.gev,{method:'DELETE'});}catch(e){}delete t.gev;}});save();}
   }catch(e){if(e&&e.code===401)gSilent();else console.error('gPushTask',e);}}
 async function gPushAll(){for(const c of data){await gPushTask(c);}}
 async function gPullAll(){try{
@@ -1151,7 +1163,7 @@ function wipe(){if(confirm('Esto borra TODOS los contactos de este dispositivo. 
 /* ============ IMPORT / EXPORT ============ */
 function exportXlsx(){const sn=i=>STAGES.find(s=>s.id===i)?.name||i;
   const rows=data.map(c=>({Nombre:c.name,Segmento:c.seg,Origen:c.src,Pais:c.country||'',Etapa:sn(c.stage),
-    'Proxima accion':c.action||'','Fecha accion':c.date||'','Valor USD':c.val||0,'Costo USD':c.cost||0,
+    'Proxima accion':(nextTask(c)&&nextTask(c).action)||'','Fecha accion':(nextTask(c)&&nextTask(c).date)||'','Valor USD':c.val||0,'Costo USD':c.cost||0,
     Telefono:c.phone||'',Email:c.email||'',Instagram:c.ig||'',Direccion:c.address||'',
     Pareja:c.partner||'',Hijos:c.kids||'',Cumpleanos:c.bday||'',Intereses:c.interests||'',
     Presupuestos:(c.att&&c.att.budgets?c.att.budgets.length:0),Nota:c.notes||''}));
@@ -1163,8 +1175,9 @@ function importFile(ev){const file=ev.target.files[0];if(!file)return;const read
       const stg=STAGES.find(s=>s.name.toLowerCase()===String(r.Etapa||'').toLowerCase());
       data.unshift({id:id(),name:String(name),seg:normSeg(r.Segmento||r.segmento||r.Tipo||''),
         src:normSrc(r.Origen||r.origen||r.Source||r.Fuente||''),stage:stg?stg.id:'nuevo',
-        country:String(r.Pais||r['País']||r.Country||''),action:String(r['Proxima accion']||r['Próxima acción']||''),
-        date:fixDate(r['Fecha accion']||r['Fecha']||''),val:+(r['Valor USD']||r.Valor||r.valor||r.Value||0)||0,
+        country:String(r.Pais||r['País']||r.Country||''),
+        tasks:(()=>{const a=String(r['Proxima accion']||r['Próxima acción']||'');const d=fixDate(r['Fecha accion']||r['Fecha']||'');return(a||d)?[{id:id(),action:a,date:d,time:'',done:false}]:[];})(),
+        val:+(r['Valor USD']||r.Valor||r.valor||r.Value||0)||0,
         cost:+(r['Costo USD']||r.Costo||r.costo||0)||0,
         phone:String(r.Telefono||r['Teléfono']||r.telefono||r.Phone||r.WhatsApp||r.Celular||''),
         email:String(r.Email||r.email||r['E-mail']||r.Correo||''),ig:String(r.Instagram||r.instagram||r.IG||''),
