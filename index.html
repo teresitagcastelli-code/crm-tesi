@@ -593,7 +593,7 @@ async function cloudLoad(){if(!sb||!cloudUser)return;
       if(s.hourlyRates)hourlyRates=Object.assign({ARS:22500,USD:0,EUR:0},s.hourlyRates);
       data.forEach(migrateContact);setSync('ok');}
     else{data=seed();events=seedEvents();data.forEach(migrateContact);await cloudSave();}
-  }catch(e){console.error('cloudLoad',e);toast('No pude leer la nube; reintentá');data=data&&data.length?data:[];events=events||[];}}
+  }catch(e){console.error('cloudLoad',e);setSync('err');toast('No pude leer la nube; reintentá');data=data&&data.length?data:[];events=events||[];}}
 function setSync(s){const el=document.getElementById('syncDot');if(!el)return;
   el.style.background=s==='ok'?'var(--ok)':(s==='err'?'var(--bad)':'var(--warn)');
   el.title=s==='ok'?'Sincronizado':(s==='err'?'Error de sincronización':'Guardando…');}
@@ -1121,10 +1121,10 @@ async function gPullAll(){try{
   }catch(err){}}
   gEvents=acc.sort((a,b)=>a.date.localeCompare(b.date));
 }catch(e){console.error('gPullAll',e);}}
-async function gAfterConnect(initial){try{setSync('wait');localStorage.setItem('gcal_connected','1');gConnected=true;
-  await gEnsureCal();await gPullAll();await gPushAll();setGcalUI();setSync('ok');render();
+async function gAfterConnect(initial){try{localStorage.setItem('gcal_connected','1');gConnected=true;
+  await gEnsureCal();await gPullAll();await gPushAll();setGcalUI();render();
   if(initial)toast('Google Calendar conectado ✓');
-}catch(e){console.error('gAfterConnect',e);setSync('err');}}
+}catch(e){console.error('gAfterConnect',e);}}
 async function gConnect(){toast('Abriendo Google…');try{await gGetToken(true);await gAfterConnect(true);}catch(e){toast('No se pudo conectar Google');console.error(e);}}
 async function gSilent(){if(!gConnected)return;try{await gGetToken(false);await gAfterConnect(false);}catch(e){console.error('gSilent',e);}}
 async function gTryAuto(){try{await gGetToken(false);await gAfterConnect(false);}catch(e){gConnected=false;localStorage.removeItem('gcal_connected');setGcalUI();if(view==='agenda')render();}}
