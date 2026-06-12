@@ -574,7 +574,7 @@ function saveEvents(){try{localStorage.setItem(EVKEY,JSON.stringify(events));}ca
 function getPin(){return localStorage.getItem(PINKEY)||'2108';}
 function artist(){return localStorage.getItem(ARTKEY)||BRAND.name;}
 function nextSeq(){let n=Math.max(+localStorage.getItem(SEQKEY)||0,104)+1;localStorage.setItem(SEQKEY,n);scheduleCloud();return n;}
-function scheduleCloud(){if(!CLOUD||!cloudUser)return;setSync('wait');clearTimeout(saveTimer);saveTimer=setTimeout(cloudSave,800);}
+function scheduleCloud(){if(!CLOUD||!cloudUser)return;setSync('wait');clearTimeout(saveTimer);saveTimer=setTimeout(cloudSave,150);}
 async function cloudSave(){if(!CLOUD||!cloudUser||!sb)return;
   const state={contacts:data,events,artist:artist(),seq:+localStorage.getItem(SEQKEY)||0,importOn,seen:gSeen,importTo:localStorage.getItem('imp_to')||'',products,workOrders,hourlyRates};
   try{const{error}=await sb.from('crm_state').upsert({user_id:cloudUser.id,state,updated_at:new Date().toISOString()});
