@@ -990,9 +990,7 @@ async function generateBudget(){
   else draftAtt.budgets.push(entry);
   const c0=data.find(x=>x.id===editingId);if(c0)pushLog(c0,'Presupuesto '+num+' generado · '+fmtMoney(cur,meta.total));
   persist(true);await renderAtt();renderLog();closeBudget();
-  // download a copy
-  const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=`Presupuesto ${num}.pdf`;a.click();
-  toast('Presupuesto '+num+' generado y guardado');}
+  toast('Presupuesto '+num+' generado y guardado ✓');}
 function registerFonts(doc){try{const F=window.FONT_DATA;if(!F||!F.Marcellus)return false;
   doc.addFileToVFS('Marcellus.ttf',F.Marcellus);doc.addFont('Marcellus.ttf','Marcellus','normal');
   doc.addFileToVFS('Raleway.ttf',F.RalewayR);doc.addFont('Raleway.ttf','Raleway','normal');
