@@ -1026,7 +1026,7 @@ function buildPDF(m){const{jsPDF}=window.jspdf;const doc=new jsPDF({unit:'mm',fo
   doc.setFillColor(30,30,30);doc.rect(L,y-5.5,R-L,8,'F');
   doc.setFont(BODY,'bold');doc.setTextColor(245,240,231);doc.setFontSize(8.5);
   doc.text('DESCRIPCIÓN',L+2,y,{charSpace:.5});doc.text('TÉCNICA / MEDIDAS',92,y);doc.text('CANT',145,y,{align:'right'});
-  doc.text('P. UNIT',161,y,{align:'right'});doc.text('SUBTOTAL',R-2,y,{align:'right'});y+=9.5;
+  doc.text('P. UNIT',168,y,{align:'right'});doc.text('SUBTOTAL',R-2,y,{align:'right'});y+=9.5;
   doc.setFont(BODY,'normal');doc.setFontSize(10.5);
   m.items.forEach(it=>{const sub=it.qty*it.price;
     doc.setFontSize(10.5);const dlines=doc.splitTextToSize(String(it.desc),68);
@@ -1038,7 +1038,7 @@ function buildPDF(m){const{jsPDF}=window.jspdf;const doc=new jsPDF({unit:'mm',fo
     mlines.forEach((l,i)=>doc.text(l,92,y+i*5.5));
     doc.setTextColor(...ink);doc.setFontSize(10.5);
     doc.text(String(it.qty),145,y,{align:'right'});
-    doc.text(fmtMoney(m.cur,it.price),161,y,{align:'right'});
+    doc.text(fmtMoney(m.cur,it.price),168,y,{align:'right'});
     doc.text(fmtMoney(m.cur,sub),R-2,y,{align:'right'});
     y+=rowH;doc.setDrawColor(...line);doc.line(L,y-2.5,R,y-2.5);});
   // total
@@ -1047,17 +1047,18 @@ function buildPDF(m){const{jsPDF}=window.jspdf;const doc=new jsPDF({unit:'mm',fo
   y+=16;
   y=pdfSection(doc,'Condiciones de pago',m.pay,L,R,y,HEAD,BODY,ink,gray,H);
   y=pdfSection(doc,'Envío y embalaje',m.ship,L,R,y,HEAD,BODY,ink,gray,H);
-  // footer
-  const fy=H-30;doc.setDrawColor(...ink);doc.setLineWidth(0.4);doc.line(L,fy,R,fy);
+  // footer: links above line, tagline below
+  const linkY=H-22;const fy=H-17;const tagY=H-11;
   doc.setFont(BODY,'normal');doc.setTextColor(...ink);doc.setFontSize(8.5);
-  const linkY=fy+8;
   const sep=' · ';
   const linkLine='WhatsApp '+BRAND.wa+sep+'Instagram '+BRAND.ig+sep+BRAND.web;
   doc.textWithLink(linkLine,W/2,linkY,{url:BRAND.waUrl,align:'center'});
+  doc.setDrawColor(...ink);doc.setLineWidth(0.4);doc.line(L,fy,R,fy);
   doc.setFont(BODY,'normal');doc.setTextColor(...gray);doc.setFontSize(8);
-  doc.text('Arte textil de autoría que enriquece superficies y vuelve protagonista al secreto, para quienes atesoran su curiosidad más íntima.',W/2,fy+16,{align:'center'});
+  doc.text('Arte textil de autoría que enriquece superficies y vuelve protagonista al secreto, para quienes atesoran su curiosidad más íntima.',W/2,tagY,{align:'center'});
   return doc.output('blob');}
 function pdfSection(doc,title,body,L,R,y,HEAD,BODY,ink,gray,H){
+  doc.setFont(BODY,'normal');doc.setFontSize(9.5);
   const lines=doc.splitTextToSize(body||'',R-L);
   const needed=5.8+lines.length*4.9+8;
   if(H&&y+needed>H-30){doc.addPage();doc.setFillColor(245,240,231);doc.rect(0,0,210,297,'F');y=20;}
