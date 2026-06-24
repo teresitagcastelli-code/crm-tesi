@@ -221,6 +221,7 @@
       <input type="search" id="search" placeholder="Buscar por nombre…" oninput="render()">
       <select id="fSeg" onchange="render()"><option value="">Todos los segmentos</option></select>
       <select id="fSrc" onchange="render()"><option value="">Todos los orígenes</option></select>
+      <button class="icon-btn btn-primary" id="addFreeTaskBtn" onclick="openFreeTask()" style="display:none">＋ Nueva tarea</button>
       <button class="icon-btn" id="addEvtBtn" onclick="openEvent()" style="display:none">＋ Evento personal</button>
       <div class="grow"></div>
       <span style="color:var(--muted);font-size:12px" id="countLbl"></span>
@@ -358,6 +359,22 @@
     <div class="modal-foot"><button class="danger hide" id="eDel" onclick="deleteEvent()">Eliminar</button><div class="grow"></div><div class="right">
       <button class="icon-btn" onclick="closeEvent()">Cancelar</button>
       <button class="icon-btn btn-primary" onclick="saveEvent()">Guardar</button>
+    </div></div>
+  </div>
+</div>
+
+<!-- FREE TASK MODAL -->
+<div class="overlay" id="ftOverlay">
+  <div class="modal">
+    <div class="modal-head"><h2>Nueva tarea</h2><button class="x" onclick="closeFreeTask()">×</button></div>
+    <div class="modal-body">
+      <div class="full"><label>Descripción</label><input id="ft_title" placeholder="Ej: Comprar bastidor / Llamar a proveedor"></div>
+      <div><label>Fecha</label><input id="ft_date" type="date"></div>
+      <div><label>Hora (opcional)</label><input id="ft_time" type="time"></div>
+    </div>
+    <div class="modal-foot"><button class="danger hide" id="ftDel" onclick="deleteFreeTask()">Eliminar</button><div class="grow"></div><div class="right">
+      <button class="icon-btn" onclick="closeFreeTask()">Cancelar</button>
+      <button class="icon-btn btn-primary" onclick="saveFreeTask()">Guardar</button>
     </div></div>
   </div>
 </div>
@@ -729,6 +746,7 @@ function setView(v){view=v;
   document.getElementById('workorders').classList.toggle('hide',v!=='workorders');
   document.getElementById('stats').classList.toggle('hide',v==='agenda'||v==='workorders');
   document.getElementById('toolbar').classList.toggle('hide',v==='workorders');
+  document.getElementById('addFreeTaskBtn').style.display=(v==='agenda')?'inline-flex':'none';
   document.getElementById('addEvtBtn').style.display=(v==='agenda'&&!gConnected)?'inline-flex':'none';
   if(v==='workorders'){renderWorkOrders();return;}
   render();if(v==='agenda'&&gConnected)gRefreshAgenda();}
@@ -784,8 +802,9 @@ function renderAgenda(list){
   list.filter(c=>!['ganado','perdido'].includes(c.stage)).forEach(c=>{
     (c.tasks||[]).filter(t=>!t.done&&t.date).forEach(t=>tasks.push({type:'task',date:t.date,c,t}));});
   const psrc=gConnected?gEvents:events;
-  const evs=psrc.map(e=>({type:'personal',date:e.date,e}));
-  const all=tasks.concat(evs).sort((a,b)=>a.date.localeCompare(b.date)||(a.type==='personal'?1:-1));
+  const evs=psrc.filter(e=>!e.freeTask).map(e=>({type:'personal',date:e.date,e}));
+  const fts=events.filter(e=>e.freeTask&&!e.done).map(e=>({type:'freeTask',date:e.date,e}));
+  const all=tasks.concat(fts).concat(evs).sort((a,b)=>a.date.localeCompare(b.date));
   const tdy=today(),wk=addDays(tdy,7);
   const groups=[{t:'Vencidas',urgent:true,f:x=>x.date<tdy},{t:'Hoy',urgent:false,f:x=>x.date===tdy},
     {t:'Próximos 7 días',urgent:false,f:x=>x.date>tdy&&x.date<=wk},{t:'Más adelante',urgent:false,f:x=>x.date>wk}];
@@ -808,6 +827,13 @@ function renderAgenda(list){
           <span class="when ${over?'over':''}">${fmtFull(t.date)}${t.time?' · '+t.time+' hs':''}</span>
           <button class="mini ok" onclick="event.stopPropagation();markDone('${c.id}','${t.id}')">✓ Hecho</button>
           <button class="mini" onclick="event.stopPropagation();reprogram('${c.id}','${t.id}',this)">Reprogramar</button></div>`;
+      }else if(x.type==='freeTask'){const e=x.e;
+        html+=`<div class="todo"><span class="tdot" style="background:var(--accent)"></span>
+          <div class="ti" onclick="openFreeTask('${e.id}')" style="cursor:pointer">
+            <b>${esc(e.title)}</b>
+            <div class="sub">Tarea libre${e.time?' · '+esc(e.time)+' hs':''}</div></div>
+          <span class="when ${over?'over':''}">${fmtFull(e.date)}</span>
+          <button class="mini ok" onclick="event.stopPropagation();markFreeTaskDone('${e.id}')">✓ Hecho</button></div>`;
       }else{const e=x.e;const clk=!gConnected;
         html+=`<div class="todo personal"><span class="tdot" style="background:#9a98ad"></span>
           <div class="ti" ${clk?`onclick="openEvent('${e.id}')" style="cursor:pointer"`:''}>
@@ -1069,6 +1095,27 @@ function fmtMoney(cur,n){return cur+' '+Number(n).toLocaleString('es-AR');}
 function cleanName(s){return String(s).replace(/[^\w\sáéíóúñ-]/gi,'').slice(0,30);}
 
 /* ============ PERSONAL EVENTS ============ */
+let editingFreeTask=null;
+function openFreeTask(id){editingFreeTask=(typeof id==='string')?id:null;
+  const e=editingFreeTask?events.find(x=>x.id===editingFreeTask):{};
+  document.getElementById('ft_title').value=e.title||'';
+  document.getElementById('ft_date').value=e.date||today();
+  document.getElementById('ft_time').value=e.time||'';
+  document.getElementById('ftDel').classList.toggle('hide',!editingFreeTask);
+  document.getElementById('ftOverlay').classList.add('open');}
+function closeFreeTask(){document.getElementById('ftOverlay').classList.remove('open');}
+function saveFreeTask(){const title=document.getElementById('ft_title').value.trim();
+  const date=document.getElementById('ft_date').value;
+  if(!title){toast('Poné una descripción');return;}
+  if(!date){toast('La fecha es obligatoria');return;}
+  const time=document.getElementById('ft_time').value||'';
+  if(editingFreeTask){const e=events.find(x=>x.id===editingFreeTask);if(e){e.title=title;e.date=date;e.time=time;}}
+  else{events.push({id:id(),title,date,time,freeTask:true,done:false});}
+  saveEvents();closeFreeTask();render();toast('Tarea guardada ✓');}
+function deleteFreeTask(){if(editingFreeTask&&confirm('¿Eliminar esta tarea?')){
+  events=events.filter(x=>x.id!==editingFreeTask);saveEvents();closeFreeTask();render();toast('Eliminada');}}
+function markFreeTaskDone(eid){const e=events.find(x=>x.id===eid);if(!e)return;
+  e.done=true;saveEvents();render();toast('¡Hecho! ✓');}
 function openEvent(id){editingEvent=(typeof id==='string')?id:null;const e=editingEvent?events.find(x=>x.id===editingEvent):{};
   document.getElementById('e_title').value=e.title||'';document.getElementById('e_date').value=e.date||today();
   document.getElementById('e_time').value=e.time||'';document.getElementById('eDel').classList.toggle('hide',!editingEvent);
