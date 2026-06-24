@@ -526,9 +526,11 @@ const PAY_DEFAULT='El pago es del 100% del valor de la obra, por transferencia b
 const SHIP_DEFAULT='El costo de envío NO está incluido en este presupuesto: se cotiza una vez confirmado el pedido y abonada la obra, según peso y provincia de destino. Envíos a todo el país por servicios de logística. El embalaje SÍ está incluido. Cada obra se entrega firmada y con certificado de autenticidad. Por ser piezas elaboradas a pedido, no tienen devolución.';
 
 let data=[],events=[],view='board',editingId=null,draftAtt={budgets:[],imgs:[]},dirty=false,pendingAction=null,editingEvent=null;
-let products=[]; // {id, name, desc, med, prices:[{date,cur,val}]}
+let products=[];
 let workOrders=[];
 let hourlyRates={ARS:22500,USD:0,EUR:0};
+let importOn=false;
+let gSeen={gmail:[],yt:[]};
 let editingBudgetKey=null;
 let editingWOId=null;
 let draftWOAtt={fichaTecnica:[],imgs:[]};
@@ -580,7 +582,7 @@ function scheduleCloud(){if(!CLOUD||!cloudUser)return;setSync('wait');clearTimeo
 async function cloudSave(){if(!CLOUD||!cloudUser||!sb)return;
   const state={contacts:data,events,artist:artist(),seq:+localStorage.getItem(SEQKEY)||0,importOn,seen:gSeen,importTo:localStorage.getItem('imp_to')||'',products,workOrders,hourlyRates};
   try{const{error}=await sb.from('crm_state').upsert({user_id:cloudUser.id,state,updated_at:new Date().toISOString()});
-    if(error)throw error;setSync('ok');}catch(e){setSync('err');console.error('cloudSave',e);}}
+    if(error)throw error;setSync('ok');}catch(e){setSync('err');console.error('cloudSave error:',e?.message||e);toast('⚠️ No se pudo guardar en la nube. '+String(e?.message||e).slice(0,60));}}
 async function cloudLoad(){if(!sb||!cloudUser)return;
   try{const{data:row,error}=await sb.from('crm_state').select('state').eq('user_id',cloudUser.id).maybeSingle();
     if(error)throw error;
@@ -637,7 +639,13 @@ function init(){
     const le=localStorage.getItem('crm_last_email');if(le)document.getElementById('cemail').value=le;
     const lr=document.getElementById('logoutRow');if(lr)lr.classList.remove('hide');
     const sw=document.getElementById('syncWrap');if(sw)sw.classList.remove('hide');
-    if(sb)sb.auth.getSession().then(({data})=>{if(data&&data.session){cloudUser=data.session.user;afterAuth();}});
+    if(sb){
+      sb.auth.getSession().then(({data})=>{if(data&&data.session){cloudUser=data.session.user;afterAuth();}});
+      sb.auth.onAuthStateChange((event,session)=>{
+        if(event==='SIGNED_IN'||event==='TOKEN_REFRESHED'){if(session){cloudUser=session.user;}}
+        if(event==='SIGNED_OUT'){cloudUser=null;location.reload();}
+      });
+    }
   }else{const p=document.getElementById('pin');if(p)p.focus();}}
 document.getElementById('pin').addEventListener('keydown',e=>{if(e.key==='Enter')tryLogin();});
 document.getElementById('cemail').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('cpin').focus();});
@@ -979,9 +987,9 @@ async function generateBudget(){
   const meta={num,client:document.getElementById('b_client').value,date:document.getElementById('b_date').value,
     valid:document.getElementById('b_valid').value,cur,pay:document.getElementById('b_pay').value,
     ship:document.getElementById('b_ship').value,plazo,items,total:items.reduce((s,i)=>s+i.qty*i.price,0)};
-  let shipText=meta.ship;
-  if(plazo)shipText+=`\n\nPlazo de elaboración: ${plazo} días corridos desde la confirmación del pago.`;
-  const pdfMeta=Object.assign({},meta,{ship:shipText});
+  let payText=meta.pay;
+  if(plazo)payText+=`\nPlazo de elaboración: ${plazo} días corridos desde la confirmación del pago.`;
+  const pdfMeta=Object.assign({},meta,{pay:payText});
   const blob=buildPDF(pdfMeta);const key=fileKey();await attUpload(key,blob,'application/pdf');
   const entry={key,name:`Presupuesto ${num} - ${cleanName(fv('name'))}.pdf`,type:'application/pdf',generated:true,meta};
   if(editingBudgetKey){
@@ -1005,20 +1013,15 @@ function buildPDF(m){const{jsPDF}=window.jspdf;const doc=new jsPDF({unit:'mm',fo
   // wordmark
   doc.setFont(HEAD,'normal');doc.setTextColor(...ink);doc.setFontSize(18);
   doc.text('TESI GOMEZ CASTELLI',W/2,16,{align:'center',charSpace:1.6});
-  doc.setFont(BODY,'normal');doc.setTextColor(...gray);doc.setFontSize(8);
-  doc.text(BRAND.city.toUpperCase(),W/2,21,{align:'center',charSpace:1.2});
-  doc.setDrawColor(...ink);doc.setLineWidth(0.4);doc.line(L,26,R,26);
+  doc.setDrawColor(...ink);doc.setLineWidth(0.4);doc.line(L,22,R,22);
   // title block
-  doc.setFont(HEAD,'normal');doc.setTextColor(...ink);doc.setFontSize(28);doc.text('Presupuesto',L,42);
-  doc.setFont(BODY,'normal');doc.setTextColor(...gray);doc.setFontSize(10.5);doc.text('de obra original',L,49);
-  doc.setFont(BODY,'bold');doc.setTextColor(...ink);doc.setFontSize(11);doc.text('N° '+m.num,R,38,{align:'right'});
+  doc.setFont(HEAD,'normal');doc.setTextColor(...ink);doc.setFontSize(28);doc.text('Presupuesto',L,38);
+  doc.setFont(BODY,'normal');doc.setTextColor(...gray);doc.setFontSize(10.5);doc.text('de obra original · Para: '+m.client,L,45);
+  doc.setFont(BODY,'bold');doc.setTextColor(...ink);doc.setFontSize(11);doc.text('N° '+m.num,R,34,{align:'right'});
   doc.setFont(BODY,'normal');doc.setTextColor(...gray);doc.setFontSize(9.5);
-  doc.text('Emisión: '+fmtLong(m.date),R,44,{align:'right'});
-  if(m.valid)doc.text('Válido hasta: '+fmtLong(m.valid),R,49,{align:'right'});
-  y=60;doc.setDrawColor(...line);doc.setLineWidth(0.3);doc.line(L,y,R,y);y+=9;
-  // client
-  doc.setFont(BODY,'bold');doc.setTextColor(...gray);doc.setFontSize(8.5);doc.text('PARA',L,y,{charSpace:1.5});
-  doc.setFont(HEAD,'normal');doc.setTextColor(...ink);doc.setFontSize(14);doc.text(m.client,L,y+7);y+=18;
+  doc.text('Emisión: '+fmtLong(m.date),R,40,{align:'right'});
+  if(m.valid)doc.text('Válido hasta: '+fmtLong(m.valid),R,45,{align:'right'});
+  y=54;doc.setDrawColor(...line);doc.setLineWidth(0.3);doc.line(L,y,R,y);y+=9;
   // items header
   doc.setFillColor(30,30,30);doc.rect(L,y-5.5,R-L,8,'F');
   doc.setFont(BODY,'bold');doc.setTextColor(245,240,231);doc.setFontSize(8.5);
@@ -1026,10 +1029,14 @@ function buildPDF(m){const{jsPDF}=window.jspdf;const doc=new jsPDF({unit:'mm',fo
   doc.text('P. UNIT',170,y,{align:'right'});doc.text('SUBTOTAL',R-2,y,{align:'right'});y+=9.5;
   doc.setFont(BODY,'normal');doc.setFontSize(10.5);
   m.items.forEach(it=>{const sub=it.qty*it.price;
-    const dlines=doc.splitTextToSize(String(it.desc),68);const rowH=Math.max(7,dlines.length*5.5);
+    doc.setFontSize(10.5);const dlines=doc.splitTextToSize(String(it.desc),68);
+    doc.setFontSize(9);const mlines=doc.splitTextToSize(String(it.med||''),50);
+    const rowH=Math.max(7,Math.max(dlines.length,mlines.length)*5.5);
+    doc.setFont(BODY,'normal');doc.setFontSize(10.5);
     doc.setTextColor(...ink);dlines.forEach((l,i)=>doc.text(l,L+2,y+i*5.5));
     doc.setTextColor(...gray);doc.setFontSize(9);
-    doc.text(String(it.med||'').slice(0,28),92,y);doc.setTextColor(...ink);doc.setFontSize(10.5);
+    mlines.forEach((l,i)=>doc.text(l,92,y+i*5.5));
+    doc.setTextColor(...ink);doc.setFontSize(10.5);
     doc.text(String(it.qty),145,y,{align:'right'});
     doc.text(fmtMoney(m.cur,it.price),170,y,{align:'right'});
     doc.text(fmtMoney(m.cur,sub),R-2,y,{align:'right'});
@@ -1041,15 +1048,14 @@ function buildPDF(m){const{jsPDF}=window.jspdf;const doc=new jsPDF({unit:'mm',fo
   y=pdfSection(doc,'Condiciones de pago',m.pay,L,R,y,HEAD,BODY,ink,gray,H);
   y=pdfSection(doc,'Envío y embalaje',m.ship,L,R,y,HEAD,BODY,ink,gray,H);
   // footer
-  const fy=H-26;doc.setDrawColor(...ink);doc.setLineWidth(0.4);doc.line(L,fy,R,fy);
-  doc.setFont(BODY,'normal');doc.setTextColor(...gray);doc.setFontSize(9);doc.text(BRAND.tagline,L,fy+6);
-  doc.setFontSize(8);doc.text('CUIT '+BRAND.cuit,R,fy+6,{align:'right'});
+  const fy=H-30;doc.setDrawColor(...ink);doc.setLineWidth(0.4);doc.line(L,fy,R,fy);
   doc.setFont(BODY,'normal');doc.setTextColor(...ink);doc.setFontSize(8.5);
-  const linkY=fy+13;let lx=L;
-  const link=(label,url,last)=>{doc.textWithLink(label,lx,linkY,{url});lx+=doc.getTextWidth(label)+4;
-    if(!last){doc.setTextColor(...gray);doc.text('·',lx-2.5,linkY);doc.setTextColor(...ink);}};
-  link('WhatsApp '+BRAND.wa,BRAND.waUrl);link('Instagram '+BRAND.ig,BRAND.igUrl);
-  link(BRAND.email,'mailto:'+BRAND.email);link(BRAND.web,BRAND.webUrl,true);
+  const linkY=fy+8;
+  const sep=' · ';
+  const linkLine='WhatsApp '+BRAND.wa+sep+'Instagram '+BRAND.ig+sep+BRAND.web;
+  doc.textWithLink(linkLine,W/2,linkY,{url:BRAND.waUrl,align:'center'});
+  doc.setFont(BODY,'normal');doc.setTextColor(...gray);doc.setFontSize(8);
+  doc.text('Arte textil de autoría que enriquece superficies y vuelve protagonista al secreto, para quienes atesoran su curiosidad más íntima.',W/2,fy+16,{align:'center'});
   return doc.output('blob');}
 function pdfSection(doc,title,body,L,R,y,HEAD,BODY,ink,gray,H){
   const lines=doc.splitTextToSize(body||'',R-L);
