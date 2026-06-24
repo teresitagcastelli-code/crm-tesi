@@ -1031,7 +1031,7 @@ function buildPDF(m){const{jsPDF}=window.jspdf;const doc=new jsPDF({unit:'mm',fo
   m.items.forEach(it=>{const sub=it.qty*it.price;
     doc.setFontSize(10.5);const dlines=doc.splitTextToSize(String(it.desc),68);
     doc.setFontSize(9);const mlines=doc.splitTextToSize(String(it.med||''),50);
-    const rowH=Math.max(7,Math.max(dlines.length,mlines.length)*5.5);
+    const rowH=Math.max(10,Math.max(dlines.length,mlines.length)*5.5+4);
     doc.setFont(BODY,'normal');doc.setFontSize(10.5);
     doc.setTextColor(...ink);dlines.forEach((l,i)=>doc.text(l,L+2,y+i*5.5));
     doc.setTextColor(...gray);doc.setFontSize(9);
