@@ -569,7 +569,7 @@ function loadData(){try{data=JSON.parse(localStorage.getItem(KEY))||null;}catch(
   data.forEach(migrateContact);
   try{events=JSON.parse(localStorage.getItem(EVKEY))||seedEvents();}catch(e){events=seedEvents();}
   saveEvents();}
-function save(){try{localStorage.setItem(KEY,JSON.stringify(data));}catch(e){}scheduleCloud();}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(data));}catch(e){}if(CLOUD&&cloudUser&&sb){setSync('wait');clearTimeout(saveTimer);cloudSave();}}
 function saveEvents(){try{localStorage.setItem(EVKEY,JSON.stringify(events));}catch(e){}scheduleCloud();}
 function getPin(){return localStorage.getItem(PINKEY)||'2108';}
 function artist(){return localStorage.getItem(ARTKEY)||BRAND.name;}
@@ -1023,19 +1023,21 @@ function buildPDF(m){const{jsPDF}=window.jspdf;const doc=new jsPDF({unit:'mm',fo
   doc.text('DESCRIPCIÓN',L+2,y,{charSpace:.5});doc.text('TÉCNICA / MEDIDAS',92,y);doc.text('CANT',145,y,{align:'right'});
   doc.text('P. UNIT',170,y,{align:'right'});doc.text('SUBTOTAL',R-2,y,{align:'right'});y+=9.5;
   doc.setFont(BODY,'normal');doc.setFontSize(10.5);
-  m.items.forEach(it=>{const sub=it.qty*it.price;doc.setTextColor(...ink);
-    doc.text(String(it.desc).slice(0,42),L+2,y);doc.setTextColor(...gray);doc.setFontSize(9);
-    doc.text(String(it.med||'').slice(0,30),92,y);doc.setTextColor(...ink);doc.setFontSize(10.5);
+  m.items.forEach(it=>{const sub=it.qty*it.price;
+    const dlines=doc.splitTextToSize(String(it.desc),68);const rowH=Math.max(7,dlines.length*5.5);
+    doc.setTextColor(...ink);dlines.forEach((l,i)=>doc.text(l,L+2,y+i*5.5));
+    doc.setTextColor(...gray);doc.setFontSize(9);
+    doc.text(String(it.med||'').slice(0,28),92,y);doc.setTextColor(...ink);doc.setFontSize(10.5);
     doc.text(String(it.qty),145,y,{align:'right'});
     doc.text(fmtMoney(m.cur,it.price),170,y,{align:'right'});
     doc.text(fmtMoney(m.cur,sub),R-2,y,{align:'right'});
-    y+=7;doc.setDrawColor(...line);doc.line(L,y-2.5,R,y-2.5);});
+    y+=rowH;doc.setDrawColor(...line);doc.line(L,y-2.5,R,y-2.5);});
   // total
   y+=6;doc.setFont(BODY,'bold');doc.setFontSize(11);doc.setTextColor(...gray);doc.text('TOTAL',120,y,{charSpace:1});
   doc.setFont(HEAD,'normal');doc.setFontSize(17);doc.setTextColor(...ink);doc.text(fmtMoney(m.cur,m.total),R-2,y,{align:'right'});
   y+=16;
-  y=pdfSection(doc,'Condiciones de pago',m.pay,L,R,y,HEAD,BODY,ink,gray);
-  y=pdfSection(doc,'Envío y embalaje',m.ship,L,R,y,HEAD,BODY,ink,gray);
+  y=pdfSection(doc,'Condiciones de pago',m.pay,L,R,y,HEAD,BODY,ink,gray,H);
+  y=pdfSection(doc,'Envío y embalaje',m.ship,L,R,y,HEAD,BODY,ink,gray,H);
   // footer
   const fy=H-26;doc.setDrawColor(...ink);doc.setLineWidth(0.4);doc.line(L,fy,R,fy);
   doc.setFont(BODY,'normal');doc.setTextColor(...gray);doc.setFontSize(9);doc.text(BRAND.tagline,L,fy+6);
@@ -1047,10 +1049,13 @@ function buildPDF(m){const{jsPDF}=window.jspdf;const doc=new jsPDF({unit:'mm',fo
   link('WhatsApp '+BRAND.wa,BRAND.waUrl);link('Instagram '+BRAND.ig,BRAND.igUrl);
   link(BRAND.email,'mailto:'+BRAND.email);link(BRAND.web,BRAND.webUrl,true);
   return doc.output('blob');}
-function pdfSection(doc,title,body,L,R,y,HEAD,BODY,ink,gray){
+function pdfSection(doc,title,body,L,R,y,HEAD,BODY,ink,gray,H){
+  const lines=doc.splitTextToSize(body||'',R-L);
+  const needed=5.8+lines.length*4.9+8;
+  if(H&&y+needed>H-30){doc.addPage();doc.setFillColor(245,240,231);doc.rect(0,0,210,297,'F');y=20;}
   doc.setFont(BODY,'bold');doc.setTextColor(...ink);doc.setFontSize(9.5);doc.text(title.toUpperCase(),L,y,{charSpace:1});y+=5.8;
   doc.setFont(BODY,'normal');doc.setTextColor(...gray);doc.setFontSize(9.5);
-  doc.splitTextToSize(body||'',R-L).forEach(l=>{doc.text(l,L,y);y+=4.9;});return y+8;}
+  lines.forEach(l=>{doc.text(l,L,y);y+=4.9;});return y+8;}
 function fmtMoney(cur,n){return cur+' '+Number(n).toLocaleString('es-AR');}
 function cleanName(s){return String(s).replace(/[^\w\sáéíóúñ-]/gi,'').slice(0,30);}
 
