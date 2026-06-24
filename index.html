@@ -1015,8 +1015,8 @@ function buildPDF(m){const{jsPDF}=window.jspdf;const doc=new jsPDF({unit:'mm',fo
   doc.text('TESI GOMEZ CASTELLI',W/2,16,{align:'center',charSpace:1.6});
   doc.setDrawColor(...ink);doc.setLineWidth(0.4);doc.line(L,22,R,22);
   // title block
-  doc.setFont(HEAD,'normal');doc.setTextColor(...ink);doc.setFontSize(28);doc.text('Presupuesto',L,38);
-  doc.setFont(BODY,'normal');doc.setTextColor(...gray);doc.setFontSize(10.5);doc.text('de obra original · Para: '+m.client,L,45);
+  doc.setFont(HEAD,'normal');doc.setTextColor(...ink);doc.setFontSize(22);doc.text('Presupuesto',L,36);
+  doc.setFont(BODY,'normal');doc.setTextColor(...gray);doc.setFontSize(10.5);doc.text('de obra original · Para: '+m.client,L,43);
   doc.setFont(BODY,'bold');doc.setTextColor(...ink);doc.setFontSize(11);doc.text('N° '+m.num.replace(/^P-/,''),R,34,{align:'right'});
   doc.setFont(BODY,'normal');doc.setTextColor(...gray);doc.setFontSize(9.5);
   doc.text('Emisión: '+fmtLong(m.date),R,40,{align:'right'});
