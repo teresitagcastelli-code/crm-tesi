@@ -421,13 +421,14 @@
       <div><label>Presupuesto N°</label><input id="wo_budgetnum" placeholder="—"></div>
       <div><label>Etapa</label><select id="wo_stage">
         <option value="cola">En cola</option><option value="produccion">En producción</option>
-        <option value="terminada">Terminada</option><option value="entregada">Entregada</option>
+        <option value="terminada">Terminada</option><option value="consignacion">En consignación</option><option value="entregada">Entregada</option>
       </select></div>
       <div class="sect">Precio y plazo</div>
       <div><label>Precio de venta</label><input id="wo_price" type="number" min="0" placeholder="0" oninput="calcWOMargin()"></div>
       <div><label>Moneda</label><select id="wo_cur" onchange="calcWOMargin()"><option>USD</option><option>ARS</option><option>EUR</option></select></div>
       <div><label>Plazo (días corridos)</label><input id="wo_plazo" type="number" min="1" placeholder="30" oninput="updateShipDate()"></div>
       <div><label>Fecha confirmación de pago</label><input id="wo_confirmed" type="date" onchange="updateShipDate()"></div>
+      <div style="display:flex;align-items:center;gap:10px;padding:8px 0"><label style="margin:0;display:flex;align-items:center;gap:8px;cursor:pointer"><input type="checkbox" id="wo_cobrada" style="width:16px;height:16px;accent-color:var(--ok)"> <span style="font-weight:600;color:var(--ok)">Cobrada</span></label></div>
       <div class="full" id="wo_deadlineRow" style="display:none">
         <div id="wo_deadlineInfo" style="background:var(--panel);border:1px solid var(--line);border-radius:9px;padding:10px 12px;font-size:13px"></div>
       </div>
@@ -535,6 +536,7 @@ const WO_STAGES=[
   {id:'cola',name:'En cola',color:'#9a98ad'},
   {id:'produccion',name:'En producción',color:'#d99a3c'},
   {id:'terminada',name:'Terminada',color:'#4fae7a'},
+  {id:'consignacion',name:'En consignación',color:'#b07fc7'},
   {id:'entregada',name:'Entregada',color:'#8aa0b5'}];
 const WO_PTASK_DEFAULTS=['Compra de insumos','Bordar obra','Dorar a la hoja','Encargar cúpula','Montar en cúpula','Embalar'];
 const WO_MAT_DEFAULTS=[{name:'Hoja de oro'},{name:'Placa de MDF'},{name:'Cúpula de acrílico'},{name:'Insumos bordado'}];
@@ -1263,6 +1265,7 @@ function openWorkOrder(woid,prefill){
   document.getElementById('wo_lh_r').value=(wo&&wo.laborHojaOro&&wo.laborHojaOro.rate||hourlyRates[wo&&wo.saleCur||'USD']||'');
   document.getElementById('wo_gf').value=(wo&&wo.gastosFijos||'');
   document.getElementById('wo_notes').value=(wo&&wo.notes||'');
+  document.getElementById('wo_cobrada').checked=!!(wo&&wo.cobrada);
   const ptasks=wo&&wo.productionTasks||(woid?[]:WO_PTASK_DEFAULTS.map(n=>({id:id(),name:n,startDate:'',endDate:'',done:false})));
   renderPTasks(ptasks);
   const mats=wo&&wo.materials||(woid?[]:WO_MAT_DEFAULTS.map(m=>({id:id(),name:m.name,medidas:'',qty:1,unit:'',price:0})));
@@ -1404,6 +1407,7 @@ function saveWorkOrder(){
     laborHojaOro:{hours:+document.getElementById('wo_lh_h').value||0,rate:+document.getElementById('wo_lh_r').value||0},
     productionTasks:collectPTasks(),materials:collectMats(),
     gastosFijos:+document.getElementById('wo_gf').value||0,
+    cobrada:document.getElementById('wo_cobrada').checked,
     notes:document.getElementById('wo_notes').value.trim(),
     att:draftWOAtt};
   if(editingWOId){const idx=workOrders.findIndex(x=>x.id===editingWOId);
@@ -1448,7 +1452,7 @@ function woCardHTML(wo){
     <div class="wo-sub">${esc(wo.contactName||'—')}${wo.budgetNum?' · N°'+esc(wo.budgetNum):''}</div>
     ${total?`<div class="wo-progress"><div class="wo-progress-bar" style="width:${pct}%"></div></div><div class="wo-cnt">${done}/${total} tareas</div>`:''}
     ${countdown}
-    <div class="wo-row"><span style="font-weight:700">${wo.saleCur} ${(wo.salePrice||0).toLocaleString('es-AR')}</span>
+    <div class="wo-row"><span style="font-weight:700">${wo.saleCur} ${(wo.salePrice||0).toLocaleString('es-AR')}${wo.cobrada?' <span style="background:#4fae7a22;color:#4fae7a;border-radius:5px;padding:1px 7px;font-size:10.5px;font-weight:700">✓ Cobrada</span>':''}</span>
     ${margin!==null?`<span style="color:${margin>=0?'var(--ok)':'var(--bad)'};font-weight:700">${margin>=0?'+':''}${margin.toFixed(0)} (${wo.salePrice?Math.round(margin/wo.salePrice*100):0}%)</span>`:''}
     </div></div>`;}
 
