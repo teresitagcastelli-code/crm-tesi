@@ -511,7 +511,7 @@
     <div class="modal-head"><h2>Remito de consignación</h2><button class="x" onclick="closeRemito()">×</button></div>
     <div class="modal-body">
       <div><label>Fecha de entrega</label><input id="rm_date" type="date"></div>
-      <div><label>Destinatario</label><input id="rm_client" readonly placeholder="Se toma de las obras"></div>
+      <div><label>Destinatario (a quién le entregás)</label><input id="rm_client" placeholder="Nombre de la persona / galería" oninput="rmClientEdited=true"></div>
       <div class="sect">Obras a entregar</div>
       <div class="full" style="font-size:12.5px;color:var(--muted);margin:-4px 0 6px">Marcá las obras que entregás en consignación. Podés ajustar técnica/medidas y cantidad de cada una.</div>
       <div class="full" id="rm_list"></div>
@@ -1558,7 +1558,10 @@ function renderWorkOrders(){
 
 /* ============ REMITO DE CONSIGNACIÓN ============ */
 function remitoSeqNext(){let n=(+localStorage.getItem('remito_seq')||0)+1;localStorage.setItem('remito_seq',n);scheduleCloud();return n;}
+let rmClientEdited=false;
 function openRemito(){
+  rmClientEdited=false;
+  document.getElementById('rm_client').value='';
   document.getElementById('rm_date').value=today();
   // candidatas: obras en consignación; si no hay, mostrar terminadas y entregadas también
   let cand=workOrders.filter(w=>w.stage==='consignacion');
@@ -1582,6 +1585,7 @@ function openRemito(){
   document.getElementById('remitoOverlay').classList.add('show');}
 function closeRemito(){document.getElementById('remitoOverlay').classList.remove('show');}
 function rmUpdateClient(){
+  if(rmClientEdited)return; // si Tesi escribió el nombre a mano, no lo pisamos
   const names=[...document.querySelectorAll('#rm_list .rm-item')]
     .filter(r=>r.querySelector('.rm-chk').checked)
     .map(r=>{const w=workOrders.find(x=>x.id===r.dataset.woid);return w&&w.contactName?w.contactName.trim():'';})
