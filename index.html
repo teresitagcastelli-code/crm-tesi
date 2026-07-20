@@ -505,6 +505,27 @@
   </div>
 </div>
 
+<!-- REMITO MODAL -->
+<div class="overlay top" id="remitoOverlay">
+  <div class="modal">
+    <div class="modal-head"><h2>Remito de consignación</h2><button class="x" onclick="closeRemito()">×</button></div>
+    <div class="modal-body">
+      <div><label>Fecha de entrega</label><input id="rm_date" type="date"></div>
+      <div><label>Destinatario</label><input id="rm_client" readonly placeholder="Se toma de las obras"></div>
+      <div class="sect">Obras a entregar</div>
+      <div class="full" style="font-size:12.5px;color:var(--muted);margin:-4px 0 6px">Marcá las obras que entregás en consignación. Podés ajustar técnica/medidas y cantidad de cada una.</div>
+      <div class="full" id="rm_list"></div>
+    </div>
+    <div class="modal-foot">
+      <div class="grow"></div>
+      <div class="right">
+        <button class="icon-btn" onclick="closeRemito()">Cancelar</button>
+        <button class="icon-btn btn-primary" onclick="generateRemito()">Generar remito PDF</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- UNSAVED DIALOG -->
 <div class="overlay top" id="uOverlay">
   <div class="dlg">
@@ -597,14 +618,14 @@ function artist(){return localStorage.getItem(ARTKEY)||BRAND.name;}
 function nextSeq(){let n=Math.max(+localStorage.getItem(SEQKEY)||0,104)+1;localStorage.setItem(SEQKEY,n);scheduleCloud();return n;}
 function scheduleCloud(){if(!CLOUD||!cloudUser)return;setSync('wait');clearTimeout(saveTimer);saveTimer=setTimeout(cloudSave,150);}
 async function cloudSave(){if(!CLOUD||!cloudUser||!sb)return;
-  const state={contacts:data,events,artist:artist(),seq:+localStorage.getItem(SEQKEY)||0,importOn,seen:gSeen,importTo:localStorage.getItem('imp_to')||'',products,workOrders,hourlyRates};
+  const state={contacts:data,events,artist:artist(),seq:+localStorage.getItem(SEQKEY)||0,remitoSeq:+localStorage.getItem('remito_seq')||0,importOn,seen:gSeen,importTo:localStorage.getItem('imp_to')||'',products,workOrders,hourlyRates};
   try{const{error}=await sb.from('crm_state').upsert({user_id:cloudUser.id,state,updated_at:new Date().toISOString()});
     if(error)throw error;setSync('ok');}catch(e){setSync('err');console.error('cloudSave error:',e?.message||e);toast('⚠️ No se pudo guardar en la nube. '+String(e?.message||e).slice(0,60));}}
 async function cloudLoad(){if(!sb||!cloudUser)return;
   try{const{data:row,error}=await sb.from('crm_state').select('state').eq('user_id',cloudUser.id).maybeSingle();
     if(error)throw error;
     if(row&&row.state){const s=row.state;data=Array.isArray(s.contacts)?s.contacts:[];events=Array.isArray(s.events)?s.events:[];
-      if(s.artist)localStorage.setItem(ARTKEY,s.artist);if(s.seq!=null)localStorage.setItem(SEQKEY,s.seq);
+      if(s.artist)localStorage.setItem(ARTKEY,s.artist);if(s.seq!=null)localStorage.setItem(SEQKEY,s.seq);if(s.remitoSeq!=null)localStorage.setItem('remito_seq',s.remitoSeq);
       gSeen={gmail:(s.seen&&Array.isArray(s.seen.gmail))?s.seen.gmail:[],yt:(s.seen&&Array.isArray(s.seen.yt))?s.seen.yt:[]};
       if(s.importOn){importOn=true;localStorage.setItem('imp_on','1');}
       if(s.importTo!=null)localStorage.setItem('imp_to',s.importTo);
@@ -1051,21 +1072,23 @@ function buildPDF(m){const{jsPDF}=window.jspdf;const doc=new jsPDF({unit:'mm',fo
   // items header
   doc.setFillColor(30,30,30);doc.rect(L,y-5.5,R-L,8,'F');
   doc.setFont(BODY,'bold');doc.setTextColor(245,240,231);doc.setFontSize(8.5);
-  doc.text('DESCRIPCIÓN',L+2,y,{charSpace:.5});doc.text('TÉCNICA / MEDIDAS',92,y);doc.text('CANT',145,y,{align:'right'});
-  doc.text('P. UNIT',168,y,{align:'right'});doc.text('SUBTOTAL',R-2,y,{align:'right'});y+=9.5;
+  // column x-anchors (money right-aligned, currency shown once in TOTAL)
+  const X_MED=78,X_CANT=120,X_UNIT=155,X_SUB=R-2;
+  doc.text('DESCRIPCIÓN',L+2,y,{charSpace:.5});doc.text('TÉCNICA / MEDIDAS',X_MED,y);doc.text('CANT',X_CANT,y,{align:'right'});
+  doc.text('P. UNIT '+m.cur,X_UNIT,y,{align:'right'});doc.text('SUBTOTAL',X_SUB,y,{align:'right'});y+=9.5;
   doc.setFont(BODY,'normal');doc.setFontSize(10.5);
   m.items.forEach(it=>{const sub=it.qty*it.price;
-    doc.setFontSize(10.5);const dlines=doc.splitTextToSize(String(it.desc),68);
-    doc.setFontSize(9);const mlines=doc.splitTextToSize(String(it.med||''),50);
+    doc.setFontSize(10.5);const dlines=doc.splitTextToSize(String(it.desc),X_MED-L-6);
+    doc.setFontSize(9);const mlines=doc.splitTextToSize(String(it.med||''),X_CANT-X_MED-10);
     const rowH=Math.max(10,Math.max(dlines.length,mlines.length)*5.5+4);
     doc.setFont(BODY,'normal');doc.setFontSize(10.5);
     doc.setTextColor(...ink);dlines.forEach((l,i)=>doc.text(l,L+2,y+i*5.5));
     doc.setTextColor(...gray);doc.setFontSize(9);
-    mlines.forEach((l,i)=>doc.text(l,92,y+i*5.5));
-    doc.setTextColor(...ink);doc.setFontSize(10.5);
-    doc.text(String(it.qty),145,y,{align:'right'});
-    doc.text(fmtMoney(m.cur,it.price),168,y,{align:'right'});
-    doc.text(fmtMoney(m.cur,sub),R-2,y,{align:'right'});
+    mlines.forEach((l,i)=>doc.text(l,X_MED,y+i*5.5));
+    doc.setTextColor(...ink);doc.setFontSize(10);
+    doc.text(String(it.qty),X_CANT,y,{align:'right'});
+    doc.text(Number(it.price).toLocaleString('es-AR'),X_UNIT,y,{align:'right'});
+    doc.text(Number(sub).toLocaleString('es-AR'),X_SUB,y,{align:'right'});
     y+=rowH;doc.setDrawColor(...line);doc.line(L,y-2.5,R,y-2.5);});
   // total
   y+=6;doc.setFont(BODY,'bold');doc.setFontSize(11);doc.setTextColor(...gray);doc.text('TOTAL',120,y,{charSpace:1});
@@ -1521,7 +1544,7 @@ function renderWorkOrders(){
   const byStage=s=>workOrders.filter(wo=>wo.stage===s);
   let html=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
     <h2 style="margin:0;font-size:18px">Órdenes de trabajo</h2>
-    <button class="icon-btn btn-primary" onclick="openWorkOrder()">＋ Nueva orden</button></div>
+    <div style="display:flex;gap:8px"><button class="icon-btn" onclick="openRemito()">📋 Remito</button><button class="icon-btn btn-primary" onclick="openWorkOrder()">＋ Nueva orden</button></div></div>
   <div class="wo-board">`;
   WO_STAGES.forEach(s=>{
     const items=byStage(s.id);
@@ -1532,6 +1555,106 @@ function renderWorkOrders(){
     html+=`</div>`;});
   html+=`</div>`;
   el.innerHTML=html;}
+
+/* ============ REMITO DE CONSIGNACIÓN ============ */
+function remitoSeqNext(){let n=(+localStorage.getItem('remito_seq')||0)+1;localStorage.setItem('remito_seq',n);scheduleCloud();return n;}
+function openRemito(){
+  document.getElementById('rm_date').value=today();
+  // candidatas: obras en consignación; si no hay, mostrar terminadas y entregadas también
+  let cand=workOrders.filter(w=>w.stage==='consignacion');
+  const preselect=cand.length>0;
+  if(!cand.length)cand=workOrders.filter(w=>['terminada','entregada','consignacion'].includes(w.stage));
+  const box=document.getElementById('rm_list');
+  if(!cand.length){box.innerHTML=`<div style="color:var(--muted);font-size:13px">No hay órdenes de trabajo para incluir. Creá o pasá obras a "En consignación" primero.</div>`;}
+  else{box.innerHTML=cand.map(w=>`
+    <div class="rm-item" data-woid="${w.id}" style="border:1px solid var(--line);border-radius:9px;padding:10px 12px;margin-bottom:8px">
+      <label style="display:flex;align-items:center;gap:9px;cursor:pointer;margin:0">
+        <input type="checkbox" class="rm-chk" style="width:16px;height:16px;accent-color:var(--accent,#b07fc7)" ${preselect?'checked':''} onchange="rmUpdateClient()">
+        <span style="font-weight:600">${esc(w.title||'(sin título)')}</span>
+        <span style="color:var(--muted);font-size:12px">${w.contactName?'· '+esc(w.contactName):''}</span>
+      </label>
+      <div style="display:grid;grid-template-columns:1fr 70px;gap:8px;margin-top:8px">
+        <input class="rm-med" placeholder="Técnica / medidas (ej: Bordado sobre acrílico · 20x20x3)" value="">
+        <input class="rm-qty" type="number" min="1" value="1">
+      </div>
+    </div>`).join('');}
+  rmUpdateClient();
+  document.getElementById('remitoOverlay').classList.add('show');}
+function closeRemito(){document.getElementById('remitoOverlay').classList.remove('show');}
+function rmUpdateClient(){
+  const names=[...document.querySelectorAll('#rm_list .rm-item')]
+    .filter(r=>r.querySelector('.rm-chk').checked)
+    .map(r=>{const w=workOrders.find(x=>x.id===r.dataset.woid);return w&&w.contactName?w.contactName.trim():'';})
+    .filter(Boolean);
+  document.getElementById('rm_client').value=[...new Set(names)].join(', ');}
+function generateRemito(){
+  const rows=[...document.querySelectorAll('#rm_list .rm-item')].filter(r=>r.querySelector('.rm-chk').checked);
+  if(!rows.length){toast('Marcá al menos una obra');return;}
+  const items=rows.map(r=>{const w=workOrders.find(x=>x.id===r.dataset.woid);
+    return{woid:r.dataset.woid,desc:(w&&w.title)||'Obra',med:r.querySelector('.rm-med').value.trim(),qty:+r.querySelector('.rm-qty').value||1};});
+  const date=document.getElementById('rm_date').value||today();
+  const client=document.getElementById('rm_client').value||'—';
+  const num='R-'+String(remitoSeqNext()).padStart(4,'0');
+  const blob=buildRemitoPDF({num,date,client,items});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;a.download=`Remito ${num} - ${cleanName(client)}.pdf`;
+  document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),4000);
+  // registrar en el historial de cada obra
+  items.forEach(it=>{const w=workOrders.find(x=>x.id===it.woid);if(w)pushWOLog(w,'Remito '+num+' generado');});
+  saveWO();closeRemito();toast('Remito '+num+' generado ✓');}
+function buildRemitoPDF(m){const{jsPDF}=window.jspdf;const doc=new jsPDF({unit:'mm',format:'a4'});
+  const ok=registerFonts(doc);const HEAD=ok?'Marcellus':'times';const BODY=ok?'Raleway':'helvetica';
+  const W=210,H=297,L=18,R=W-18;const ink=[30,30,30],gray=[136,136,136],line=[208,202,191];let y=0;
+  doc.setFillColor(245,240,231);doc.rect(0,0,W,H,'F');
+  doc.setFont(HEAD,'normal');doc.setTextColor(...ink);doc.setFontSize(18);
+  doc.text('TESI GOMEZ CASTELLI',W/2,16,{align:'center',charSpace:1.6});
+  doc.setDrawColor(...ink);doc.setLineWidth(0.4);doc.line(L,22,R,22);
+  doc.setFont(HEAD,'normal');doc.setTextColor(...ink);doc.setFontSize(22);doc.text('Remito',L,36);
+  doc.setFont(BODY,'normal');doc.setTextColor(...gray);doc.setFontSize(10.5);doc.text('Entrega en consignación',L,43);
+  doc.setFont(BODY,'bold');doc.setTextColor(...ink);doc.setFontSize(11);doc.text('N° '+m.num.replace(/^R-/,''),R,34,{align:'right'});
+  doc.setFont(BODY,'normal');doc.setTextColor(...gray);doc.setFontSize(9.5);
+  doc.text('Fecha: '+fmtLong(m.date),R,40,{align:'right'});
+  y=54;doc.setFont(BODY,'bold');doc.setTextColor(...ink);doc.setFontSize(9.5);doc.text('ENTREGADO A',L,y,{charSpace:1});
+  doc.setFont(BODY,'normal');doc.setTextColor(...gray);doc.setFontSize(11);doc.text(String(m.client||'—'),L,y+6);
+  y+=14;doc.setDrawColor(...line);doc.setLineWidth(0.3);doc.line(L,y,R,y);y+=9;
+  // items header
+  const X_CANT=R-2;
+  doc.setFillColor(30,30,30);doc.rect(L,y-5.5,R-L,8,'F');
+  doc.setFont(BODY,'bold');doc.setTextColor(245,240,231);doc.setFontSize(8.5);
+  doc.text('OBRA',L+2,y,{charSpace:.5});doc.text('TÉCNICA / MEDIDAS',95,y);doc.text('CANT',X_CANT,y,{align:'right'});y+=9.5;
+  doc.setFont(BODY,'normal');doc.setFontSize(10.5);
+  m.items.forEach(it=>{
+    doc.setFontSize(10.5);const dlines=doc.splitTextToSize(String(it.desc),72);
+    doc.setFontSize(9);const mlines=doc.splitTextToSize(String(it.med||'—'),60);
+    const rowH=Math.max(10,Math.max(dlines.length,mlines.length)*5.5+4);
+    doc.setFont(BODY,'normal');doc.setFontSize(10.5);
+    doc.setTextColor(...ink);dlines.forEach((l,i)=>doc.text(l,L+2,y+i*5.5));
+    doc.setTextColor(...gray);doc.setFontSize(9);
+    mlines.forEach((l,i)=>doc.text(l,95,y+i*5.5));
+    doc.setTextColor(...ink);doc.setFontSize(10);
+    doc.text(String(it.qty),X_CANT,y,{align:'right'});
+    y+=rowH;doc.setDrawColor(...line);doc.line(L,y-2.5,R,y-2.5);});
+  y+=6;doc.setFont(BODY,'bold');doc.setFontSize(10.5);doc.setTextColor(...gray);
+  const totalQty=m.items.reduce((s,i)=>s+(+i.qty||0),0);
+  doc.text('TOTAL DE PIEZAS',L,y,{charSpace:1});
+  doc.setFont(HEAD,'normal');doc.setFontSize(15);doc.setTextColor(...ink);doc.text(String(totalQty),R-2,y,{align:'right'});
+  y+=16;
+  y=pdfSection(doc,'Condición','Las obras se entregan en consignación. La propiedad de cada pieza permanece de la autora hasta su venta o devolución. Se acordará por separado el porcentaje de comisión y el plazo de consignación.',L,R,y,HEAD,BODY,ink,gray,H);
+  // firmas
+  if(y<H-60)y=H-58;
+  doc.setDrawColor(...ink);doc.setLineWidth(0.3);
+  doc.line(L,y,L+70,y);doc.line(R-70,y,R,y);
+  doc.setFont(BODY,'normal');doc.setTextColor(...gray);doc.setFontSize(8.5);
+  doc.text('Entrega (Tesi Gomez Castelli)',L,y+5);doc.text('Recibe (aclaración y firma)',R-70,y+5);
+  // footer
+  const linkY=H-22;const fy=H-17;const tagY=H-11;
+  doc.setFont(BODY,'normal');doc.setTextColor(...ink);doc.setFontSize(8.5);
+  const linkLine='WhatsApp '+BRAND.wa+' · Instagram '+BRAND.ig+' · '+BRAND.web;
+  doc.textWithLink(linkLine,W/2,linkY,{url:BRAND.waUrl,align:'center'});
+  doc.setDrawColor(...ink);doc.setLineWidth(0.4);doc.line(L,fy,R,fy);
+  doc.setFont(BODY,'normal');doc.setTextColor(...gray);doc.setFontSize(8);
+  doc.text('Arte textil de autoría que enriquece superficies y vuelve protagonista al secreto, para quienes atesoran su curiosidad más íntima.',W/2,tagY,{align:'center'});
+  return doc.output('blob');}
 
 /* ============ UTIL ============ */
 function today(){return new Date().toISOString().slice(0,10);}
